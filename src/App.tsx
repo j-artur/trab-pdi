@@ -6,6 +6,7 @@ import {
   createSignal,
   type Component,
 } from "solid-js";
+import { createStore } from "solid-js/store";
 import { clx } from "./utils";
 
 class Img {
@@ -49,7 +50,7 @@ async function getPixels(
 
   return new Promise<Img>((resolve) => {
     const img = new Image();
-    img.src = URL.createObjectURL(imageFile);
+
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
@@ -61,20 +62,44 @@ async function getPixels(
 
       resolve(new Img(imageFile.name, img.width, img.height, data));
     };
+    img.src = URL.createObjectURL(imageFile);
   });
 }
 
-type ArithmeticConfig = {
-  onOutOfRange: "clamp" | "wrap" | "normalize";
-  onDifferentSize: "center" | "stretch";
-};
-
 const App: Component = () => {
   const [images, setImages] = createSignal<Img[]>([]);
-  const [config, setConfig] = createSignal<ArithmeticConfig>({
+  const [opCfg, setOpCfg] = createSignal<OperationConfig>({
     onOutOfRange: "clamp",
     onDifferentSize: "center",
   });
+  const [transformCfg, setTransformCfg] = createStore<TransformationConfig>({
+    onOutOfRange: "clamp",
+    translate: {
+      x: 0,
+      y: 0,
+    },
+    rotate: {
+      origin: {
+        x: 0,
+        y: 0,
+      },
+      angle: 0,
+    },
+    scale: {
+      x: 1,
+      y: 1,
+    },
+    reflect: {
+      x: false,
+      y: false,
+    },
+    shear: {
+      x: 0,
+      y: 0,
+    },
+  });
+  const [selectedTransformation, setSelectedTransformation] =
+    createSignal<Transformation>("translate");
   const [outputs, setOutputs] = createSignal<Img[]>([]);
 
   const [primaryImage, setPrimaryImage] = createSignal<number>();
@@ -98,45 +123,6 @@ const App: Component = () => {
         onInput={(e) => loadImages([...(e.currentTarget.files ?? [])])}
         accept="image/*,.pgm"
       />
-
-      <form
-        class="p-2 flex gap-2"
-        onInput={(e) => {
-          setConfig({
-            ...config(),
-            onOutOfRange: (e.target as HTMLInputElement)
-              .value as ArithmeticConfig["onOutOfRange"],
-          });
-        }}
-      >
-        <label>
-          <input
-            type="radio"
-            name="on_out_of_range"
-            value="clamp"
-            checked={config().onOutOfRange === "clamp"}
-          />
-          Clamp
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="on_out_of_range"
-            value="wrap"
-            checked={config().onOutOfRange === "wrap"}
-          />
-          Wrap
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="on_out_of_range"
-            value="normalize"
-            checked={config().onOutOfRange === "normalize"}
-          />
-          Normalize
-        </label>
-      </form>
 
       <Show when={images()}>
         {(imgs) => (
@@ -174,8 +160,49 @@ const App: Component = () => {
         )}
       </Show>
 
-      <Show
-        when={primaryImage() !== undefined && secondaryImage() !== undefined}
+      <form
+        class="p-2 flex gap-2"
+        onInput={(e) => {
+          setOpCfg({
+            ...opCfg(),
+            onOutOfRange: (e.target as HTMLInputElement)
+              .value as OperationConfig["onOutOfRange"],
+          });
+        }}
+      >
+        <label>
+          <input
+            type="radio"
+            name="on_out_of_range"
+            value="clamp"
+            checked={opCfg().onOutOfRange === "clamp"}
+          />
+          Clamp
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="on_out_of_range"
+            value="wrap"
+            checked={opCfg().onOutOfRange === "wrap"}
+          />
+          Wrap
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="on_out_of_range"
+            value="normalize"
+            checked={opCfg().onOutOfRange === "normalize"}
+          />
+          Normalize
+        </label>
+      </form>
+      <div
+        class={clx({
+          "opacity-50":
+            primaryImage() === undefined || secondaryImage() === undefined,
+        })}
       >
         <For each={Object.values(Operation)}>
           {(op) => (
@@ -186,21 +213,169 @@ const App: Component = () => {
                   op,
                   images()[primaryImage()!],
                   images()[secondaryImage()!],
-                  config()
+                  opCfg()
                 );
 
                 setOutputs([...outputs(), img]);
               }}
+              disabled={
+                primaryImage() === undefined || secondaryImage() === undefined
+              }
             >
               {op}
             </button>
           )}
         </For>
+      </div>
+
+      <form class="p-2 flex gap-2">
+        <label>
+          <input
+            type="radio"
+            name="on_out_of_range"
+            value="clamp"
+            onInput={(e) => {
+              setTransformCfg(
+                "onOutOfRange",
+                e.target.value as TransformationConfig["onOutOfRange"]
+              );
+            }}
+            checked={transformCfg.onOutOfRange === "clamp"}
+          />
+          Clamp
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="on_out_of_range"
+            value="wrap"
+            onInput={(e) => {
+              setTransformCfg(
+                "onOutOfRange",
+                e.target.value as TransformationConfig["onOutOfRange"]
+              );
+            }}
+            checked={transformCfg.onOutOfRange === "wrap"}
+          />
+          Wrap
+        </label>
+      </form>
+      <div>
+        <For each={Object.values(Transformation)}>
+          {(transformation) => (
+            <button
+              class={clx("border p-2", {
+                "bg-blue-500": selectedTransformation() === transformation,
+              })}
+              onClick={() => setSelectedTransformation(transformation)}
+            >
+              {transformation}
+            </button>
+          )}
+        </For>
+
+        <button
+          class={clx("border p-2", {
+            "opacity-50": primaryImage() === undefined,
+          })}
+          onClick={async () => {
+            const img = await transform(
+              selectedTransformation(),
+              images()[primaryImage()!],
+              transformCfg
+            );
+
+            setOutputs([...outputs(), img]);
+          }}
+          disabled={primaryImage() === undefined}
+        >
+          Aplicar
+        </button>
+      </div>
+      <Show when={selectedTransformation() === "translate"}>
+        <form>
+          <label>
+            X:
+            <input
+              type="number"
+              value={transformCfg.translate.x}
+              onInput={(e) => {
+                setTransformCfg(
+                  "translate",
+                  "x",
+                  Number(e.currentTarget.value)
+                );
+              }}
+            />
+          </label>
+          <label>
+            Y:
+            <input
+              type="number"
+              value={transformCfg.translate.y}
+              onInput={(e) => {
+                setTransformCfg(
+                  "translate",
+                  "y",
+                  Number(e.currentTarget.value)
+                );
+              }}
+            />
+          </label>
+        </form>
+      </Show>
+      <Show when={selectedTransformation() === "rotate"}>
+        <form>
+          <label>
+            X:
+            <input
+              type="number"
+              value={transformCfg.rotate.origin.x}
+              onInput={(e) => {
+                setTransformCfg(
+                  "rotate",
+                  "origin",
+                  "x",
+                  Number(e.currentTarget.value)
+                );
+              }}
+            />
+          </label>
+          <label>
+            Y:
+            <input
+              type="number"
+              value={transformCfg.rotate.origin.y}
+              onInput={(e) => {
+                setTransformCfg(
+                  "rotate",
+                  "origin",
+                  "y",
+                  Number(e.currentTarget.value)
+                );
+              }}
+            />
+          </label>
+          <label>
+            Degrees:
+            <input
+              type="number"
+              value={transformCfg.rotate.angle}
+              onInput={(e) => {
+                setTransformCfg(
+                  "rotate",
+                  "angle",
+                  Number(e.currentTarget.value)
+                );
+              }}
+            />
+          </label>
+        </form>
       </Show>
 
       <Show when={outputs()}>
         {(outputs) => (
-          <ul>
+          <ul class="flex gap-2 p-2">
             <For each={[...outputs()]}>
               {(img) => (
                 <li>
@@ -268,11 +443,16 @@ const Operation = {
 
 type Operation = keyof typeof Operation;
 
+type OperationConfig = {
+  onOutOfRange: "clamp" | "wrap" | "normalize";
+  onDifferentSize: "center" | "stretch";
+};
+
 async function operate(
   operation: Operation,
   img1: Img,
   img2: Img,
-  config: ArithmeticConfig
+  config: OperationConfig
 ) {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -409,4 +589,192 @@ function operatePixels(operation: Operation, pixel1: number, pixel2: number) {
     case "xor":
       return pixel1 ^ pixel2;
   }
+}
+
+const Transformation = {
+  translate: "translate",
+  rotate: "rotate",
+  scale: "scale",
+  reflect: "reflect",
+  shear: "shear",
+} as const;
+
+type Transformation = keyof typeof Transformation;
+
+type TransformationConfig = {
+  onOutOfRange: "clamp" | "wrap";
+  translate: {
+    x: number;
+    y: number;
+  };
+  rotate: {
+    origin: {
+      x: number;
+      y: number;
+    };
+    angle: number;
+  };
+  scale: {
+    x: number;
+    y: number;
+  };
+  reflect: {
+    x: boolean;
+    y: boolean;
+  };
+  shear: {
+    x: number;
+    y: number;
+  };
+};
+
+async function transform(
+  transformation: Transformation,
+  img: Img,
+  config: TransformationConfig
+): Promise<Img> {
+  console.log(config);
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const output = ctx!.createImageData(img.width, img.height);
+
+  switch (transformation) {
+    case "translate":
+      for (let y = 0; y < img.height; y++) {
+        for (let x = 0; x < img.width; x++) {
+          const i = y * img.width * 4 + x * 4;
+
+          const pixel = translatePixel(img, x, y, config);
+
+          output.data.set(pixel, i);
+        }
+      }
+      break;
+    case "rotate": {
+      const newImg = await transform("translate", img, {
+        ...config,
+        translate: {
+          x: -config.rotate.origin.x,
+          y: -config.rotate.origin.y,
+        },
+      });
+
+      for (let y = 0; y < newImg.height; y++) {
+        for (let x = 0; x < newImg.width; x++) {
+          const i = y * newImg.width * 4 + x * 4;
+
+          const pixel = rotatePixel(newImg, x, y, config);
+
+          output.data.set(pixel, i);
+        }
+      }
+
+      const newImg2 = await transform("translate", newImg, {
+        ...config,
+        translate: {
+          x: config.rotate.origin.x,
+          y: config.rotate.origin.y,
+        },
+      });
+
+      return new Img(
+        `${transformation}_${config.onOutOfRange}.png`,
+        newImg2.width,
+        newImg2.height,
+        newImg2.pixels
+      );
+    }
+  }
+
+  const newImg = new Img(
+    `${transformation}_${config.onOutOfRange}.png`,
+    img.width,
+    img.height,
+    output.data
+  );
+
+  return newImg;
+}
+
+function transformPixel(
+  transformation: Transformation,
+  img: Img,
+  x: number,
+  y: number,
+  config: TransformationConfig
+): Uint8ClampedArray {
+  switch (transformation) {
+    case "translate":
+      return translatePixel(img, x, y, config);
+    case "rotate":
+    default:
+      return rotatePixel(img, x, y, config);
+  }
+}
+
+function translatePixel(
+  img: Img,
+  x: number,
+  y: number,
+  config: TransformationConfig
+): Uint8ClampedArray {
+  let newX = x + config.translate.x;
+  let newY = y + config.translate.y;
+
+  if (newX < 0 || newX >= img.width) {
+    if (config.onOutOfRange === "clamp") {
+      return new Uint8ClampedArray([0, 0, 0, 0]);
+    } else if (config.onOutOfRange === "wrap") {
+      newX = newX % img.width;
+    }
+  }
+
+  if (newY < 0 || newY >= img.height) {
+    if (config.onOutOfRange === "clamp") {
+      return new Uint8ClampedArray([0, 0, 0, 0]);
+    } else if (config.onOutOfRange === "wrap") {
+      newY = newY % img.height;
+    }
+  }
+
+  const newIndex = newY * img.width * 4 + newX * 4;
+
+  return img.pixels.slice(newIndex, newIndex + 4);
+}
+
+function rotatePixel(
+  img: Img,
+  x: number,
+  y: number,
+  config: TransformationConfig
+): Uint8ClampedArray {
+  const radians = (config.rotate.angle * Math.PI) / 180;
+
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+
+  let newX = Math.round(x * cos - y * sin);
+  let newY = Math.round(x * sin + y * cos);
+
+  if (newX < 0 || newX >= img.width) {
+    if (config.onOutOfRange === "clamp") {
+      return new Uint8ClampedArray([0, 0, 0, 0]);
+    } else if (config.onOutOfRange === "wrap") {
+      newX = newX % img.width;
+    }
+  }
+
+  if (newY < 0 || newY >= img.height) {
+    if (config.onOutOfRange === "clamp") {
+      return new Uint8ClampedArray([0, 0, 0, 0]);
+    } else if (config.onOutOfRange === "wrap") {
+      newY = newY % img.height;
+    }
+  }
+
+  const newIndex = newY * img.width * 4 + newX * 4;
+
+  return img.pixels.slice(newIndex, newIndex + 4);
 }

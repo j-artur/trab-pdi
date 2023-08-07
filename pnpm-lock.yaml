@@ -11,6 +11,9 @@ dependencies:
   clsx:
     specifier: ^2.0.0
     version: 2.0.0
+  decode-tiff:
+    specifier: ^0.2.1
+    version: 0.2.1
   postcss:
     specifier: ^8.4.27
     version: 8.4.27
@@ -1018,6 +1021,10 @@ packages:
     dependencies:
       ms: 2.1.2
     dev: true
+
+  /decode-tiff@0.2.1:
+    resolution: {integrity: sha512-v/7hQBv/DrOVQ+Eljg0BLMRbXZYuuw3YZ8duZuFxYpo6qUkdn7oFRkN95RZKbnh08EHNjrMXMbEUNhTLuhPvvA==}
+    dev: false
 
   /didyoumean@1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
