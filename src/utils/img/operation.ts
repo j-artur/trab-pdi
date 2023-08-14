@@ -22,9 +22,6 @@ export async function operate(
   img2: Img,
   config: OperationConfig
 ) {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
   // center the smaller image in the bigger one
   if (img1.width !== img2.width || img1.height !== img2.height) {
     const width = Math.max(img1.width, img2.width);
@@ -62,7 +59,7 @@ export async function operate(
     img2.height = height;
   }
 
-  const output = ctx!.createImageData(img1.width, img1.height);
+  const output = new ImageData(img1.width, img1.height);
 
   const rawData = new Int16Array(img1.pixels.length);
 

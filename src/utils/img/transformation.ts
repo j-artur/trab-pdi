@@ -42,12 +42,10 @@ export async function transform(
   img: Img,
   config: TransformationConfig
 ): Promise<Img> {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
   let output: ImageData;
+
   if (transformation === "scale") {
-    output = ctx!.createImageData(
+    output = new ImageData(
       Math.round(img.width * config.scale.x),
       Math.round(img.height * config.scale.y)
     );
@@ -55,12 +53,9 @@ export async function transform(
     const widthOffset = Math.round(img.height * config.shear.x);
     const heightOffset = Math.round(img.width * config.shear.y);
 
-    output = ctx!.createImageData(
-      img.width + widthOffset,
-      img.height + heightOffset
-    );
+    output = new ImageData(img.width + widthOffset, img.height + heightOffset);
   } else {
-    output = ctx!.createImageData(img.width, img.height);
+    output = new ImageData(img.width, img.height);
   }
 
   for (let y = 0; y < output.height; y++) {

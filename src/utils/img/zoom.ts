@@ -18,17 +18,15 @@ export async function zoom(
   img: Img,
   config: ZoomConfig
 ): Promise<Img> {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
   let output: ImageData;
+
   if (zoom.startsWith("in")) {
-    output = ctx!.createImageData(
+    output = new ImageData(
       Math.round(img.width * config.amount),
       Math.round(img.height * config.amount)
     );
   } else {
-    output = ctx!.createImageData(
+    output = new ImageData(
       Math.round(img.width / config.amount),
       Math.round(img.height / config.amount)
     );

@@ -250,12 +250,15 @@ function splitCMY(img: Img): Img[] {
 
       const cmy = rgbToCmy(r, g, b);
 
-      c.pixels[i + 1] = 255 - cmy[0];
-      c.pixels[i + 2] = 255 - cmy[0];
-      m.pixels[i + 0] = 255 - cmy[1];
-      m.pixels[i + 2] = 255 - cmy[1];
-      y.pixels[i + 0] = 255 - cmy[2];
-      y.pixels[i + 1] = 255 - cmy[2];
+      c.pixels[i + 0] = 255 - cmy[0];
+      c.pixels[i + 1] = 255;
+      c.pixels[i + 2] = 255;
+      m.pixels[i + 0] = 255;
+      m.pixels[i + 1] = 255 - cmy[1];
+      m.pixels[i + 2] = 255;
+      y.pixels[i + 0] = 255;
+      y.pixels[i + 1] = 255;
+      y.pixels[i + 2] = 255 - cmy[2];
 
       c.pixels[i + 3] = img.pixels[i + 3];
       m.pixels[i + 3] = img.pixels[i + 3];
@@ -302,12 +305,15 @@ function splitCMYK(img: Img): Img[] {
 
       const cmyk = rgbToCmyk(r, g, b);
 
-      c.pixels[i + 1] = 255 - cmyk[0];
-      c.pixels[i + 2] = 255 - cmyk[0];
-      m.pixels[i + 0] = 255 - cmyk[1];
-      m.pixels[i + 2] = 255 - cmyk[1];
-      y.pixels[i + 0] = 255 - cmyk[2];
-      y.pixels[i + 1] = 255 - cmyk[2];
+      c.pixels[i + 0] = 255 - cmyk[0];
+      c.pixels[i + 1] = 255;
+      c.pixels[i + 2] = 255;
+      m.pixels[i + 0] = 255;
+      m.pixels[i + 1] = 255 - cmyk[1];
+      m.pixels[i + 2] = 255;
+      y.pixels[i + 0] = 255;
+      y.pixels[i + 1] = 255;
+      y.pixels[i + 2] = 255 - cmyk[2];
       k.pixels[i + 0] = 255 - cmyk[3];
       k.pixels[i + 1] = 255 - cmyk[3];
       k.pixels[i + 2] = 255 - cmyk[3];
