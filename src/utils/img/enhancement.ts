@@ -155,17 +155,9 @@ function reverse(img: Img) {
   const output = new ImageData(img.width, img.height);
 
   for (let i = 0; i < img.pixels.length; i += 4) {
-    const r = img.pixels[i + 0];
-    const g = img.pixels[i + 1];
-    const b = img.pixels[i + 2];
-
-    const greyscale = (r + g + b) / 3;
-
-    const newGreyscale = 255 - greyscale;
-
-    output.data[i + 0] = newGreyscale;
-    output.data[i + 1] = newGreyscale;
-    output.data[i + 2] = newGreyscale;
+    output.data[i + 0] = 255 - img.pixels[i + 0];
+    output.data[i + 1] = 255 - img.pixels[i + 1];
+    output.data[i + 2] = 255 - img.pixels[i + 2];
     output.data[i + 3] = img.pixels[i + 3];
   }
 
