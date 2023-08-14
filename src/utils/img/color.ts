@@ -9,6 +9,7 @@ export const colorSchemes = {
   YUV: "YUV",
   YIQ: "YIQ",
   YCbCr: "YCbCr",
+  YDbDr: "YDbDr",
 } as const;
 
 export type ColorScheme = (typeof colorSchemes)[keyof typeof colorSchemes];
@@ -141,6 +142,14 @@ function rgbToYCbCr(r: number, g: number, b: number): [number, number, number] {
   return [y, cb, cr];
 }
 
+function rgbToYDbDr(r: number, g: number, b: number): [number, number, number] {
+  const y = 0.299 * r + 0.587 * g + 0.114 * b;
+  const db = -0.45 * r - 0.883 * g + 1.333 * b;
+  const dr = -1.333 * r + 1.116 * g + 0.217 * b;
+
+  return [y, db, dr];
+}
+
 export async function splitColorspace(
   scheme: ColorScheme,
   img: Img
@@ -162,6 +171,8 @@ export async function splitColorspace(
       return splitYIQ(img);
     case "YCbCr":
       return splitYCbCr(img);
+    case "YDbDr":
+      return splitYDbDr(img);
   }
 }
 
@@ -567,4 +578,57 @@ function splitYCbCr(img: Img): Img[] {
   }
 
   return [y, cb, cr];
+}
+
+function splitYDbDr(img: Img): Img[] {
+  const y = new Img(
+    `YDbDr_Y-${img.name}`,
+    img.width,
+    img.height,
+    new Uint8ClampedArray(img.pixels.length)
+  );
+  const db = new Img(
+    `YDbDr_Db-${img.name}`,
+    img.width,
+    img.height,
+    new Uint8ClampedArray(img.pixels.length)
+  );
+  const dr = new Img(
+    `YDbDr_Dr-${img.name}`,
+    img.width,
+    img.height,
+    new Uint8ClampedArray(img.pixels.length)
+  );
+
+  for (let y_ = 0; y_ < img.height; y_++) {
+    for (let x = 0; x < img.width; x++) {
+      const i = y_ * img.width * 4 + x * 4;
+
+      const r = img.pixels[i + 0];
+      const g = img.pixels[i + 1];
+      const b = img.pixels[i + 2];
+
+      const ydbdr = rgbToYDbDr(r, g, b);
+
+      const y__ = ydbdr[0];
+      const db__ = ydbdr[1];
+      const dr__ = ydbdr[2];
+
+      y.pixels[i + 0] = y__;
+      y.pixels[i + 1] = y__;
+      y.pixels[i + 2] = y__;
+      db.pixels[i + 0] = db__;
+      db.pixels[i + 1] = db__;
+      db.pixels[i + 2] = db__;
+      dr.pixels[i + 0] = dr__;
+      dr.pixels[i + 1] = dr__;
+      dr.pixels[i + 2] = dr__;
+
+      y.pixels[i + 3] = img.pixels[i + 3];
+      db.pixels[i + 3] = img.pixels[i + 3];
+      dr.pixels[i + 3] = img.pixels[i + 3];
+    }
+  }
+
+  return [y, db, dr];
 }
