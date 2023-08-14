@@ -11,23 +11,21 @@ import {
 } from "solid-js";
 import { createStore } from "solid-js/store";
 import { clx } from "./utils";
+import { Img, createURL, getPixels } from "./utils/img";
+import { ColorScheme, colorSchemes, splitColorspace } from "./utils/img/color";
 import {
-  Img,
   Operation,
   OperationConfig,
-  Transformation,
-  TransformationConfig,
-  Zoom,
-  ZoomConfig,
-  createURL,
-  getPixels,
   operate,
   operations,
+} from "./utils/img/operation";
+import {
+  Transformation,
+  TransformationConfig,
   transform,
   transformations,
-  zoom,
-  zooms,
-} from "./utils/img";
+} from "./utils/img/transformation";
+import { Zoom, ZoomConfig, zoom, zooms } from "./utils/img/zoom";
 
 const App: Component = () => {
   const [images, setImages] = createSignal<Img[]>([]);
@@ -89,7 +87,7 @@ const App: Component = () => {
       files.map((file) => getPixels(file, canvas))
     );
 
-    setImages(imgs);
+    setImages([...images(), ...imgs]);
   }
 
   return (
@@ -107,7 +105,7 @@ const App: Component = () => {
             <For each={[...imgs()]}>
               {(img) => (
                 <li
-                  class={clx("border-2 p-1", {
+                  class={clx("border-2 relative group p-1", {
                     "border-t-blue-500 border-l-blue-500":
                       imgs().indexOf(img) === primaryImage(),
                     "border-b-red-500 border-r-red-500":
@@ -130,8 +128,15 @@ const App: Component = () => {
                   }}
                   title={`${img.width}x${img.height}`}
                 >
+                  <button
+                    class="absolute top-0 right-0 py-1 px-2 border rounded bg-white text-red-500 font-bold hidden group-hover:block"
+                    onClick={() => {
+                      setOutputs(outputs().filter((i) => i !== img));
+                    }}
+                  >
+                    X
+                  </button>
                   <Thumbnail img={img} />
-                  <p class="max-w-full p-1 truncate">{img.name}</p>
                 </li>
               )}
             </For>
@@ -426,26 +431,26 @@ const App: Component = () => {
               </label>
             </Match>
           </Switch>
-          <div>
-            <button
-              class={clx("border p-2", {
-                "opacity-50": primaryImage() === undefined,
-              })}
-              onClick={async () => {
-                const img = await transform(
-                  selectedTransformation(),
-                  images()[primaryImage()!],
-                  transformCfg
-                );
-
-                setOutputs([...outputs(), img]);
-              }}
-              disabled={primaryImage() === undefined}
-            >
-              Aplicar
-            </button>
-          </div>
         </form>
+        <div>
+          <button
+            class={clx("border p-2", {
+              "opacity-50": primaryImage() === undefined,
+            })}
+            onClick={async () => {
+              const img = await transform(
+                selectedTransformation(),
+                images()[primaryImage()!],
+                transformCfg
+              );
+
+              setOutputs([...outputs(), img]);
+            }}
+            disabled={primaryImage() === undefined}
+          >
+            Aplicar
+          </button>
+        </div>
       </div>
 
       <div
@@ -484,12 +489,46 @@ const App: Component = () => {
         </label>
       </form>
 
+      <div
+        class={clx({
+          "opacity-50": primaryImage() === undefined,
+        })}
+      >
+        <For each={Object.keys(colorSchemes) as ColorScheme[]}>
+          {(scheme) => (
+            <button
+              class="border p-2"
+              onClick={async () => {
+                const imgs = await splitColorspace(
+                  scheme,
+                  images()[primaryImage()!]
+                );
+
+                setOutputs([...outputs(), ...imgs]);
+              }}
+              disabled={primaryImage() === undefined}
+            >
+              {colorSchemes[scheme]}
+            </button>
+          )}
+        </For>
+      </div>
+
       <Show when={outputs()}>
         {(outputs) => (
           <ul class="flex gap-2 p-2 flex-wrap max-w-full">
             <For each={[...outputs()]}>
               {(img) => (
-                <li title={`${img.width}x${img.height}`}>
+                <li class="relative group" title={`${img.width}x${img.height}`}>
+                  <button
+                    class="absolute top-0 right-0 py-1 px-2 border rounded bg-white text-red-500 font-bold hidden group-hover:block"
+                    onClick={() => {
+                      setOutputs(outputs().filter((i) => i !== img));
+                    }}
+                  >
+                    X
+                  </button>
+
                   <Thumbnail img={img} />
                 </li>
               )}
@@ -505,10 +544,20 @@ const Thumbnail = ({ img }: { img: Img }) => {
   const [url] = createResource(img, createURL);
 
   return (
-    <div class="h-56 w-56 flex items-center justify-center">
-      <Suspense>
-        <img src={url()} class="object-contain border max-w-full max-h-full" />
-      </Suspense>
+    <div class="flex items-center flex-col justify-center">
+      <div class="w-56 h-56 flex items-center justify-center">
+        <Suspense>
+          <img
+            src={url()}
+            class="object-contain max-h-full max-w-full border"
+            style={{
+              background:
+                "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUAQMAAAC3R49OAAAABlBMVEX////09PQtDxrOAAAAE0lEQVQI12P4f4CBKMxg/4EYDAAFkR1NiYvv7QAAAABJRU5ErkJggg==')",
+            }}
+          />
+        </Suspense>
+      </div>
+      <p class="max-w-full p-1 truncate">{img.name}</p>
     </div>
   );
 };
