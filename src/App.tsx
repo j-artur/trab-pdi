@@ -14,11 +14,22 @@ import { clx } from "./utils";
 import { Img, createURL, getPixels } from "./utils/img";
 import { ColorScheme, colorSchemes, splitColorspace } from "./utils/img/color";
 import {
+  Enhancement,
+  EnhancementConfig,
+  enhance,
+  enhancements,
+} from "./utils/img/enhancement";
+import {
   Operation,
   OperationConfig,
   operate,
   operations,
 } from "./utils/img/operation";
+import {
+  PseudoColorization,
+  pseudoColorizations,
+  pseudoColorize,
+} from "./utils/img/pseudoColor";
 import {
   Transformation,
   TransformationConfig,
@@ -63,6 +74,31 @@ const App: Component = () => {
   const [zoomCfg, setZoomCfg] = createSignal<ZoomConfig>({
     amount: 1,
   });
+  const [enhancementCfg, setEnhancementCfg] = createStore<EnhancementConfig>({
+    interval: {
+      min: 0,
+      max: 255,
+    },
+    multipleParts: [
+      {
+        from: { min: 0, max: 85 },
+        to: { min: 0, max: 127 },
+      },
+      {
+        from: { min: 85, max: 170 },
+        to: { min: 128, max: 128 },
+      },
+      {
+        from: { min: 170, max: 255 },
+        to: { min: 129, max: 255 },
+      },
+    ],
+    binary: {
+      threshold: 127,
+    },
+  });
+  const [selectedEnhancement, setSelectedEnhancement] =
+    createSignal<Enhancement>("interval");
 
   const [outputs, setOutputs] = createSignal<Img[]>([]);
 
@@ -83,9 +119,7 @@ const App: Component = () => {
   async function loadImages(files: File[]) {
     const canvas = document.createElement("canvas");
 
-    const imgs = await Promise.all(
-      files.map((file) => getPixels(file, canvas))
-    );
+    const imgs = await Promise.all(files.map(file => getPixels(file, canvas)));
 
     setImages([...images(), ...imgs]);
   }
@@ -95,15 +129,15 @@ const App: Component = () => {
       <input
         type="file"
         multiple
-        onInput={(e) => loadImages([...(e.currentTarget.files ?? [])])}
+        onInput={e => loadImages([...(e.currentTarget.files ?? [])])}
         accept="image/*,.pgm"
       />
 
       <Show when={images()}>
-        {(imgs) => (
+        {imgs => (
           <ul class="flex p-2 gap-2 flex-wrap max-w-full">
             <For each={[...imgs()]}>
-              {(img) => (
+              {img => (
                 <li
                   class={clx("border-2 relative group p-1", {
                     "border-t-blue-500 border-l-blue-500":
@@ -111,7 +145,7 @@ const App: Component = () => {
                     "border-b-red-500 border-r-red-500":
                       imgs().indexOf(img) === secondaryImage(),
                   })}
-                  onClick={(e) => {
+                  onClick={e => {
                     if (e.shiftKey) {
                       if (secondaryImage() === imgs().indexOf(img)) {
                         setSecondaryImage(undefined);
@@ -131,7 +165,7 @@ const App: Component = () => {
                   <button
                     class="absolute top-0 right-0 py-1 px-2 border rounded bg-white text-red-500 font-bold hidden group-hover:block"
                     onClick={() => {
-                      setOutputs(outputs().filter((i) => i !== img));
+                      setOutputs(outputs().filter(i => i !== img));
                     }}
                   >
                     X
@@ -144,9 +178,9 @@ const App: Component = () => {
         )}
       </Show>
 
-      <form
+      <div
         class="p-2 flex gap-2"
-        onInput={(e) => {
+        onInput={e => {
           setOpCfg({
             ...opCfg(),
             onOutOfRange: (e.target as HTMLInputElement)
@@ -181,7 +215,7 @@ const App: Component = () => {
           />
           Normalize
         </label>
-      </form>
+      </div>
       <div
         class={clx({
           "opacity-50":
@@ -189,7 +223,7 @@ const App: Component = () => {
         })}
       >
         <For each={Object.keys(operations) as Operation[]}>
-          {(op) => (
+          {op => (
             <button
               class="border p-2"
               onClick={async () => {
@@ -213,13 +247,13 @@ const App: Component = () => {
       </div>
 
       <div>
-        <form class="p-2 flex gap-2">
+        <div class="p-2 flex gap-2">
           <label>
             <input
               type="radio"
               name="on_out_of_range"
               value="clamp"
-              onInput={(e) => {
+              onInput={e => {
                 setTransformCfg(
                   "onOutOfRange",
                   e.target.value as TransformationConfig["onOutOfRange"]
@@ -234,7 +268,7 @@ const App: Component = () => {
               type="radio"
               name="on_out_of_range"
               value="wrap"
-              onInput={(e) => {
+              onInput={e => {
                 setTransformCfg(
                   "onOutOfRange",
                   e.target.value as TransformationConfig["onOutOfRange"]
@@ -244,10 +278,10 @@ const App: Component = () => {
             />
             Wrap
           </label>
-        </form>
+        </div>
         <div>
           <For each={Object.keys(transformations) as Transformation[]}>
-            {(tr) => (
+            {tr => (
               <button
                 class={clx("border p-2", {
                   "bg-blue-500": selectedTransformation() === tr,
@@ -260,7 +294,7 @@ const App: Component = () => {
           </For>
         </div>
 
-        <form>
+        <div>
           <Switch>
             <Match when={selectedTransformation() === "translate"}>
               <label>
@@ -268,7 +302,7 @@ const App: Component = () => {
                 <input
                   type="number"
                   value={transformCfg.translate.x}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg(
                       "translate",
                       "x",
@@ -284,7 +318,7 @@ const App: Component = () => {
                 <input
                   type="number"
                   value={transformCfg.translate.y}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg(
                       "translate",
                       "y",
@@ -302,7 +336,7 @@ const App: Component = () => {
                 <input
                   type="number"
                   value={transformCfg.rotate.origin.x}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg(
                       "rotate",
                       "origin",
@@ -319,7 +353,7 @@ const App: Component = () => {
                 <input
                   type="number"
                   value={transformCfg.rotate.origin.y}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg(
                       "rotate",
                       "origin",
@@ -336,7 +370,7 @@ const App: Component = () => {
                 <input
                   type="number"
                   value={transformCfg.rotate.angle}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg(
                       "rotate",
                       "angle",
@@ -354,7 +388,7 @@ const App: Component = () => {
                 <input
                   type="number"
                   value={transformCfg.scale.x}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg(
                       "scale",
                       "x",
@@ -368,7 +402,7 @@ const App: Component = () => {
                 <input
                   type="number"
                   value={transformCfg.scale.y}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg(
                       "scale",
                       "y",
@@ -384,7 +418,7 @@ const App: Component = () => {
                 <input
                   type="checkbox"
                   checked={transformCfg.reflect.x}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg("reflect", "x", e.currentTarget.checked);
                   }}
                 />
@@ -394,7 +428,7 @@ const App: Component = () => {
                 <input
                   type="checkbox"
                   checked={transformCfg.reflect.y}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg("reflect", "y", e.currentTarget.checked);
                   }}
                 />
@@ -406,7 +440,7 @@ const App: Component = () => {
                 <input
                   type="number"
                   value={transformCfg.shear.x}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg(
                       "shear",
                       "x",
@@ -420,7 +454,7 @@ const App: Component = () => {
                 <input
                   type="number"
                   value={transformCfg.shear.y}
-                  onInput={(e) => {
+                  onInput={e => {
                     setTransformCfg(
                       "shear",
                       "y",
@@ -431,7 +465,7 @@ const App: Component = () => {
               </label>
             </Match>
           </Switch>
-        </form>
+        </div>
         <div>
           <button
             class={clx("border p-2", {
@@ -459,7 +493,7 @@ const App: Component = () => {
         })}
       >
         <For each={Object.keys(zooms) as Zoom[]}>
-          {(z) => (
+          {z => (
             <button
               class="border p-2"
               onClick={async () => {
@@ -474,20 +508,20 @@ const App: Component = () => {
           )}
         </For>
       </div>
-      <form>
+      <div>
         <label>
           Amount:
           <input
             type="number"
             value={zoomCfg().amount}
-            onInput={(e) => {
+            onInput={e => {
               setZoomCfg({
                 amount: Number(e.currentTarget.value),
               });
             }}
           />
         </label>
-      </form>
+      </div>
 
       <div
         class={clx({
@@ -495,7 +529,7 @@ const App: Component = () => {
         })}
       >
         <For each={Object.keys(colorSchemes) as ColorScheme[]}>
-          {(scheme) => (
+          {scheme => (
             <button
               class="border p-2"
               onClick={async () => {
@@ -514,16 +548,253 @@ const App: Component = () => {
         </For>
       </div>
 
+      <div
+        class={clx({
+          "opacity-50": primaryImage() === undefined,
+        })}
+      >
+        <For each={Object.keys(pseudoColorizations) as PseudoColorization[]}>
+          {pseudoColor => (
+            <button
+              class="border p-2"
+              onClick={async () => {
+                const img = await pseudoColorize(
+                  pseudoColor,
+                  images()[primaryImage()!]
+                );
+
+                setOutputs([...outputs(), img]);
+              }}
+              disabled={primaryImage() === undefined}
+            >
+              Pseudo-colorization: {pseudoColorizations[pseudoColor]}
+            </button>
+          )}
+        </For>
+      </div>
+
+      <div>
+        <div>
+          <For each={Object.keys(enhancements) as Enhancement[]}>
+            {en => (
+              <button
+                class={clx("border p-2", {
+                  "bg-blue-500": selectedEnhancement() === en,
+                })}
+                onClick={() => setSelectedEnhancement(en)}
+              >
+                {enhancements[en]}
+              </button>
+            )}
+          </For>
+        </div>
+
+        <div>
+          <Switch>
+            <Match when={selectedEnhancement() === "interval"}>
+              <label>
+                Min:
+                <input
+                  type="number"
+                  value={enhancementCfg.interval.min}
+                  onInput={e => {
+                    setEnhancementCfg(
+                      "interval",
+                      "min",
+                      Number(e.currentTarget.value)
+                    );
+                  }}
+                  min={0}
+                  max={255}
+                />
+              </label>
+              <label>
+                Max:
+                <input
+                  type="number"
+                  value={enhancementCfg.interval.max}
+                  onInput={e => {
+                    setEnhancementCfg(
+                      "interval",
+                      "max",
+                      Number(e.currentTarget.value)
+                    );
+                  }}
+                  min={0}
+                  max={255}
+                />
+              </label>
+            </Match>
+            <Match when={selectedEnhancement() === "multiple-parts"}>
+              <For each={enhancementCfg.multipleParts}>
+                {(part, i) => (
+                  <div>
+                    <label>
+                      F Min:
+                      <input
+                        type="number"
+                        value={part.from.min}
+                        onInput={e => {
+                          setEnhancementCfg(
+                            "multipleParts",
+                            i(),
+                            "from",
+                            "min",
+                            Number(e.currentTarget.value)
+                          );
+                        }}
+                        min={0}
+                        max={255}
+                      />
+                    </label>
+                    <label>
+                      F Max:
+                      <input
+                        type="number"
+                        value={part.from.max}
+                        onInput={e => {
+                          setEnhancementCfg(
+                            "multipleParts",
+                            i(),
+                            "from",
+                            "max",
+                            Number(e.currentTarget.value)
+                          );
+                        }}
+                        min={0}
+                        max={255}
+                      />
+                    </label>
+                    <label>
+                      G Min:
+                      <input
+                        type="number"
+                        value={part.to.min}
+                        onInput={e => {
+                          setEnhancementCfg(
+                            "multipleParts",
+                            i(),
+                            "to",
+                            "min",
+                            Number(e.currentTarget.value)
+                          );
+                        }}
+                        min={0}
+                        max={255}
+                      />
+                    </label>
+                    <label>
+                      G Max:
+                      <input
+                        type="number"
+                        value={part.to.max}
+                        onInput={e => {
+                          setEnhancementCfg(
+                            "multipleParts",
+                            i(),
+                            "to",
+                            "max",
+                            Number(e.currentTarget.value)
+                          );
+                        }}
+                        min={0}
+                        max={255}
+                      />
+                    </label>
+                    <button
+                      class="border p-2 bg-red-500 text-white rounded"
+                      onClick={() => {
+                        setEnhancementCfg(
+                          "multipleParts",
+                          enhancementCfg.multipleParts.filter(
+                            (_, j) => j !== i()
+                          )
+                        );
+                      }}
+                    >
+                      X
+                    </button>
+                  </div>
+                )}
+              </For>
+              <button
+                class="border p-2 bg-blue-500 text-white rounded"
+                onClick={() => {
+                  setEnhancementCfg("multipleParts", [
+                    ...enhancementCfg.multipleParts,
+                    {
+                      from: {
+                        min: enhancementCfg.multipleParts.reduce(
+                          (acc, curr) => Math.max(acc, curr.from.max),
+                          0
+                        ),
+                        max: 255,
+                      },
+                      to: {
+                        min: enhancementCfg.multipleParts.reduce(
+                          (acc, curr) => Math.max(acc, curr.to.max),
+                          0
+                        ),
+                        max: 255,
+                      },
+                    },
+                  ]);
+                }}
+              >
+                Add part
+              </button>
+            </Match>
+            <Match when={selectedEnhancement() === "binary"}>
+              <label>
+                Threshold:
+                <input
+                  type="number"
+                  value={enhancementCfg.binary.threshold}
+                  onInput={e => {
+                    setEnhancementCfg(
+                      "binary",
+                      "threshold",
+                      Number(e.currentTarget.value)
+                    );
+                  }}
+                  min={0}
+                  max={255}
+                />
+              </label>
+            </Match>
+          </Switch>
+        </div>
+        <div>
+          <button
+            class={clx("border p-2", {
+              "opacity-50": primaryImage() === undefined,
+            })}
+            onClick={async () => {
+              const img = await enhance(
+                selectedEnhancement(),
+                images()[primaryImage()!],
+                enhancementCfg
+              );
+
+              setOutputs([...outputs(), img]);
+            }}
+            disabled={primaryImage() === undefined}
+          >
+            Aplicar
+          </button>
+        </div>
+      </div>
+
       <Show when={outputs()}>
-        {(outputs) => (
+        {outputs => (
           <ul class="flex gap-2 p-2 flex-wrap max-w-full">
             <For each={[...outputs()]}>
-              {(img) => (
+              {img => (
                 <li class="relative group" title={`${img.width}x${img.height}`}>
                   <button
                     class="absolute top-0 right-0 py-1 px-2 border rounded bg-white text-red-500 font-bold hidden group-hover:block"
                     onClick={() => {
-                      setOutputs(outputs().filter((i) => i !== img));
+                      setOutputs(outputs().filter(i => i !== img));
                     }}
                   >
                     X

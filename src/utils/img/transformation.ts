@@ -74,7 +74,7 @@ export async function transform(
   }
 
   const newImg = new Img(
-    `${transformation}_${config.onOutOfRange}.png`,
+    `${transformation}_${config.onOutOfRange}-${img.name}`,
     output.width,
     output.height,
     output.data

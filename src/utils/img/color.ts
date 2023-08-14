@@ -10,6 +10,7 @@ export const colorSchemes = {
   YIQ: "YIQ",
   YCbCr: "YCbCr",
   YDbDr: "YDbDr",
+  greyscale: "greyscale",
 } as const;
 
 export type ColorScheme = (typeof colorSchemes)[keyof typeof colorSchemes];
@@ -150,6 +151,10 @@ function rgbToYDbDr(r: number, g: number, b: number): [number, number, number] {
   return [y, db, dr];
 }
 
+function rgbToGreyscale(r: number, g: number, b: number): number {
+  return (r + g + b) / 3;
+}
+
 export async function splitColorspace(
   scheme: ColorScheme,
   img: Img
@@ -173,6 +178,8 @@ export async function splitColorspace(
       return splitYCbCr(img);
     case "YDbDr":
       return splitYDbDr(img);
+    case "greyscale":
+      return [greyscale(img)];
   }
 }
 
@@ -631,4 +638,28 @@ function splitYDbDr(img: Img): Img[] {
   }
 
   return [y, db, dr];
+}
+
+function greyscale(img: Img): Img {
+  const output = new Img(
+    `greyscale-${img.name}`,
+    img.width,
+    img.height,
+    new Uint8ClampedArray(img.pixels.length)
+  );
+
+  for (let i = 0; i < img.pixels.length; i += 4) {
+    const r = img.pixels[i + 0];
+    const g = img.pixels[i + 1];
+    const b = img.pixels[i + 2];
+
+    const greyscale = rgbToGreyscale(r, g, b);
+
+    output.pixels[i + 0] = greyscale;
+    output.pixels[i + 1] = greyscale;
+    output.pixels[i + 2] = greyscale;
+    output.pixels[i + 3] = img.pixels[i + 3];
+  }
+
+  return output;
 }

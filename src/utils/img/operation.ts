@@ -128,7 +128,7 @@ export async function operate(
   }
 
   const newImg = new Img(
-    `${operation}_${config.onOutOfRange}.png`,
+    `${operation}_${config.onOutOfRange}-${img1.name}-${img2.name}`,
     img1.width,
     img1.height,
     output.data

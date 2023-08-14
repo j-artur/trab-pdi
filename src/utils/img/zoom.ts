@@ -45,7 +45,7 @@ export async function zoom(
   }
 
   const newImg = new Img(
-    `zoom-${zoom}_${config.amount}.png`,
+    `zoom-${zoom}_${config.amount}-${img.name}`,
     output.width,
     output.height,
     output.data
