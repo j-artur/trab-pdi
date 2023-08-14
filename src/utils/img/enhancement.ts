@@ -1,14 +1,14 @@
 import { Img } from ".";
 
 export const enhancements = {
-  "interval": "Interval",
-  "multiple-parts": "Multiple Parts",
-  "reverse": "Reverse",
-  "binary": "Binary",
-  "log": "Log",
-  "root": "Root",
-  "exponential": "Exponential",
-  "square": "Square",
+  interval: "Intervalo",
+  multipleParts: "Por partes",
+  binary: "Binário",
+  reverse: "Inverso",
+  root: "Raiz quadrada",
+  square: "Quadrado",
+  log: "Logaritmo",
+  exponential: "Exponencial",
 } as const;
 
 export type Enhancement = keyof typeof enhancements;
@@ -60,7 +60,7 @@ export async function enhance(
     case "interval":
       output = interval(img, config.interval.min, config.interval.max);
       break;
-    case "multiple-parts":
+    case "multipleParts":
       output = multipleParts(img, config.multipleParts);
       break;
     case "reverse":

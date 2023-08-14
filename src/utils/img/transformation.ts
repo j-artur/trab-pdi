@@ -1,17 +1,22 @@
 import { Img } from ".";
 
 export const transformations = {
-  translate: "Translate",
-  rotate: "Rotate",
-  scale: "Scale",
-  reflect: "Reflect",
-  shear: "Shear",
+  translate: "Translação",
+  rotate: "Rotação",
+  scale: "Escala",
+  reflect: "Espelhamento",
+  shear: "Cisalhamento",
 } as const;
 
 export type Transformation = keyof typeof transformations;
 
+export const transformationConfigs = {
+  clamp: "Truncar",
+  wrap: "Repetir",
+} as const;
+
 export type TransformationConfig = {
-  onOutOfRange: "clamp" | "wrap";
+  onOutOfRange: keyof typeof transformationConfigs;
   translate: {
     x: number;
     y: number;
@@ -143,14 +148,10 @@ function rotatePixel(
   const sin = Math.sin(radians);
 
   let newX = Math.round(
-    config.rotate.origin.x +
-      (x - config.rotate.origin.x) * cos -
-      (y - config.rotate.origin.y) * sin
+    config.rotate.origin.x + (x - config.rotate.origin.x) * cos - (y - config.rotate.origin.y) * sin
   );
   let newY = Math.round(
-    config.rotate.origin.y +
-      (x - config.rotate.origin.x) * sin +
-      (y - config.rotate.origin.y) * cos
+    config.rotate.origin.y + (x - config.rotate.origin.x) * sin + (y - config.rotate.origin.y) * cos
   );
 
   if (newX < 0 || newX >= img.width) {

@@ -1,10 +1,10 @@
 import { Img } from ".";
 
 export const zooms = {
-  "in-replication": "Zoom In (Replication)",
-  "in-interpolation": "Zoom In (Interpolation)",
-  "out-exclusion": "Zoom Out (Exclusion)",
-  "out-mean": "Zoom Out (Mean)",
+  "in-replication": "Zoom-In: Replicação",
+  "in-interpolation": "Zoom-In: Interpolação",
+  "out-exclusion": "Zoom-Out: Exclusão",
+  "out-mean": "Zoom-Out: Valor Médio",
 } as const;
 
 export type Zoom = keyof typeof zooms;
@@ -13,11 +13,7 @@ export type ZoomConfig = {
   amount: number;
 };
 
-export async function zoom(
-  zoom: Zoom,
-  img: Img,
-  config: ZoomConfig
-): Promise<Img> {
+export async function zoom(zoom: Zoom, img: Img, config: ZoomConfig): Promise<Img> {
   let output: ImageData;
 
   if (zoom.startsWith("in")) {
@@ -115,18 +111,9 @@ function zoomInInterpolationPixel(
     y1 -= 1;
   }
 
-  const topLeft = img.pixels.slice(
-    y1 * img.width * 4 + x1 * 4,
-    y1 * img.width * 4 + x1 * 4 + 4
-  );
-  const topRight = img.pixels.slice(
-    y1 * img.width * 4 + x2 * 4,
-    y1 * img.width * 4 + x2 * 4 + 4
-  );
-  const bottomLeft = img.pixels.slice(
-    y2 * img.width * 4 + x1 * 4,
-    y2 * img.width * 4 + x1 * 4 + 4
-  );
+  const topLeft = img.pixels.slice(y1 * img.width * 4 + x1 * 4, y1 * img.width * 4 + x1 * 4 + 4);
+  const topRight = img.pixels.slice(y1 * img.width * 4 + x2 * 4, y1 * img.width * 4 + x2 * 4 + 4);
+  const bottomLeft = img.pixels.slice(y2 * img.width * 4 + x1 * 4, y2 * img.width * 4 + x1 * 4 + 4);
   const bottomRight = img.pixels.slice(
     y2 * img.width * 4 + x2 * 4,
     y2 * img.width * 4 + x2 * 4 + 4
@@ -135,15 +122,11 @@ function zoomInInterpolationPixel(
   const pixel = new Uint8ClampedArray(4);
 
   for (let i = 0; i < 4; i++) {
-    const topLine =
-      topLeft[i] + ((topRight[i] - topLeft[i]) / config.amount) * dx;
+    const topLine = topLeft[i] + ((topRight[i] - topLeft[i]) / config.amount) * dx;
 
-    const bottomLine =
-      bottomLeft[i] + ((bottomRight[i] - bottomLeft[i]) / config.amount) * dx;
+    const bottomLine = bottomLeft[i] + ((bottomRight[i] - bottomLeft[i]) / config.amount) * dx;
 
-    pixel[i] = Math.round(
-      topLine + ((bottomLine - topLine) / config.amount) * dy
-    );
+    pixel[i] = Math.round(topLine + ((bottomLine - topLine) / config.amount) * dy);
   }
 
   return pixel;
@@ -163,12 +146,7 @@ function zoomOutExclusionPixel(
   return img.pixels.slice(newIndex, newIndex + 4);
 }
 
-function zoomOutMeanPixel(
-  img: Img,
-  x: number,
-  y: number,
-  config: ZoomConfig
-): Uint8ClampedArray {
+function zoomOutMeanPixel(img: Img, x: number, y: number, config: ZoomConfig): Uint8ClampedArray {
   // take the mean of the pixels in the square
   const x1 = Math.floor(x * config.amount);
   const y1 = Math.floor(y * config.amount);

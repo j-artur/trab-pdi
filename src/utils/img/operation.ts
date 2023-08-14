@@ -1,27 +1,28 @@
 import { Img } from ".";
 
 export const operations = {
-  add: "Add",
-  subtract: "Subtract",
-  multiply: "Multiply",
-  divide: "Divide",
-  and: "And",
-  or: "Or",
-  xor: "Xor",
+  add: "Soma",
+  subtract: "Subtração",
+  multiply: "Multiplicação",
+  divide: "Divisão",
+  and: "E",
+  or: "Ou",
+  xor: "Ou Exclusivo",
 } as const;
 
 export type Operation = keyof typeof operations;
 
+export const operationConfigs = {
+  clamp: "Truncar",
+  wrap: "Repetir",
+  normalize: "Normalizar",
+} as const;
+
 export type OperationConfig = {
-  onOutOfRange: "clamp" | "wrap" | "normalize";
+  onOutOfRange: keyof typeof operationConfigs;
 };
 
-export async function operate(
-  operation: Operation,
-  img1: Img,
-  img2: Img,
-  config: OperationConfig
-) {
+export async function operate(operation: Operation, img1: Img, img2: Img, config: OperationConfig) {
   // center the smaller image in the bigger one
   if (img1.width !== img2.width || img1.height !== img2.height) {
     const width = Math.max(img1.width, img2.width);
@@ -64,26 +65,10 @@ export async function operate(
   const rawData = new Int16Array(img1.pixels.length);
 
   for (let i = 0; i < img1.pixels.length; i += 4) {
-    rawData[i + 0] = operatePixels(
-      operation,
-      img1.pixels[i + 0],
-      img2.pixels[i + 0]
-    );
-    rawData[i + 1] = operatePixels(
-      operation,
-      img1.pixels[i + 1],
-      img2.pixels[i + 1]
-    );
-    rawData[i + 2] = operatePixels(
-      operation,
-      img1.pixels[i + 2],
-      img2.pixels[i + 2]
-    );
-    rawData[i + 3] = operatePixels(
-      "add",
-      img1.pixels[i + 3],
-      img2.pixels[i + 3]
-    );
+    rawData[i + 0] = operatePixels(operation, img1.pixels[i + 0], img2.pixels[i + 0]);
+    rawData[i + 1] = operatePixels(operation, img1.pixels[i + 1], img2.pixels[i + 1]);
+    rawData[i + 2] = operatePixels(operation, img1.pixels[i + 2], img2.pixels[i + 2]);
+    rawData[i + 3] = operatePixels("add", img1.pixels[i + 3], img2.pixels[i + 3]);
   }
 
   if (config.onOutOfRange === "clamp") {

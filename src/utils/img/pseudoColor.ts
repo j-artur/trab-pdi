@@ -1,8 +1,8 @@
 import { Img } from ".";
 
 export const pseudoColorizations = {
-  densitySlicing: "Density Slicing",
-  redistribution: "Redistribution",
+  densitySlicing: "Fatiamento por Densidade",
+  redistribution: "Redistribuição",
 } as const;
 
 export type PseudoColorization = keyof typeof pseudoColorizations;
@@ -33,8 +33,7 @@ function densitySlicing(img: Img) {
   const output = new ImageData(img.width, img.height);
 
   for (let i = 0; i < output.data.length; i += 4) {
-    const greyIntensity =
-      (img.pixels[i + 0] + img.pixels[i + 1] + img.pixels[i + 2]) / 3;
+    const greyIntensity = (img.pixels[i + 0] + img.pixels[i + 1] + img.pixels[i + 2]) / 3;
 
     if (greyIntensity <= 85) {
       output.data[i + 0] = 255;

@@ -10,10 +10,10 @@ export const colorSchemes = {
   YIQ: "YIQ",
   YCbCr: "YCbCr",
   YDbDr: "YDbDr",
-  greyscale: "greyscale",
+  greyscale: "Escala de cinza",
 } as const;
 
-export type ColorScheme = (typeof colorSchemes)[keyof typeof colorSchemes];
+export type ColorScheme = keyof typeof colorSchemes;
 
 function rgbToCmy(r: number, g: number, b: number): [number, number, number] {
   const c = 255 - r;
@@ -23,11 +23,7 @@ function rgbToCmy(r: number, g: number, b: number): [number, number, number] {
   return [c, m, y];
 }
 
-function rgbToCmyk(
-  r: number,
-  g: number,
-  b: number
-): [number, number, number, number] {
+function rgbToCmyk(r: number, g: number, b: number): [number, number, number, number] {
   const [c, m, y] = rgbToCmy(r, g, b);
 
   const k = Math.min(c, m, y);
@@ -155,10 +151,7 @@ function rgbToGreyscale(r: number, g: number, b: number): number {
   return (r + g + b) / 3;
 }
 
-export async function splitColorspace(
-  scheme: ColorScheme,
-  img: Img
-): Promise<Img[]> {
+export async function splitColorspace(scheme: ColorScheme, img: Img): Promise<Img[]> {
   switch (scheme) {
     case "RGB":
       return splitRGB(img);
