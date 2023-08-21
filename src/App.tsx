@@ -19,7 +19,12 @@ import {
   operationConfigs,
   operations,
 } from "./utils/img/operation";
-import { PseudoColorization, pseudoColorizations, pseudoColorize } from "./utils/img/pseudoColor";
+import {
+  PseudoColorization,
+  PseudoColorizationConfig,
+  pseudoColorizations,
+  pseudoColorize,
+} from "./utils/img/pseudoColor";
 import {
   Transformation,
   TransformationConfig,
@@ -86,7 +91,13 @@ const App: Component = () => {
       threshold: 127,
     },
   });
-  const [selectedEnhancement, setSelectedEnhancement] = createSignal<Enhancement>("interval");
+  const [pseudoColorCfg, setPseudoColorCfg] = createStore<PseudoColorizationConfig>({
+    slices: [
+      { min: 0, max: 85, color: [255, 0, 0] },
+      { min: 85, max: 170, color: [0, 255, 0] },
+      { min: 170, max: 255, color: [0, 0, 255] },
+    ],
+  });
 
   const [outputs, setOutputs] = createSignal<Img[]>([]);
 
@@ -248,16 +259,49 @@ const App: Component = () => {
           <div class="flex flex-col gap-1 p-2">
             <For each={Object.keys(pseudoColorizations) as PseudoColorization[]}>
               {pseudoColor => (
-                <Button
-                  class="w-full"
-                  onClick={async () => {
-                    const img = await pseudoColorize(pseudoColor, images()[primaryImage()!]);
-                    setOutputs([...outputs(), img]);
-                  }}
-                  disabled={primaryImage() === undefined}
+                <Show
+                  when={pseudoColor in pseudoColorComponents}
+                  fallback={
+                    <Button
+                      onClick={async () => {
+                        const img = await pseudoColorize(
+                          pseudoColor,
+                          images()[primaryImage()!],
+                          pseudoColorCfg
+                        );
+                        setOutputs([...outputs(), img]);
+                      }}
+                      disabled={primaryImage() === undefined}
+                    >
+                      {pseudoColorizations[pseudoColor]}
+                    </Button>
+                  }
                 >
-                  {pseudoColorizations[pseudoColor]}
-                </Button>
+                  <Collapsible title={pseudoColorizations[pseudoColor]}>
+                    <div class="flex flex-col gap-2 p-2">
+                      <Dynamic
+                        component={
+                          pseudoColorComponents[pseudoColor as keyof typeof pseudoColorComponents]
+                        }
+                        cfg={pseudoColorCfg}
+                        setCfg={setPseudoColorCfg}
+                      />
+                      <Button
+                        onClick={async () => {
+                          const img = await pseudoColorize(
+                            pseudoColor,
+                            images()[primaryImage()!],
+                            pseudoColorCfg
+                          );
+                          setOutputs([...outputs(), img]);
+                        }}
+                        disabled={primaryImage() === undefined}
+                      >
+                        Aplicar
+                      </Button>
+                    </div>
+                  </Collapsible>
+                </Show>
               )}
             </For>
           </div>
@@ -470,6 +514,91 @@ const transformationComponents = {
     </>
   ),
 } as const satisfies Record<Transformation, Component<TransformationComponentProps>>;
+
+type PseudoColorizationComponentProps = {
+  cfg: PseudoColorizationConfig;
+  setCfg: SetStoreFunction<PseudoColorizationConfig>;
+};
+
+const pseudoColorComponents = {
+  densitySlicing: props => (
+    <>
+      <For each={props.cfg.slices}>
+        {(slice, i) => (
+          <div class="flex flex-col gap-1 p-1">
+            <div class="flex flex-row gap-1">
+              <Input
+                label="Min"
+                value={slice.min}
+                onInput={min => props.setCfg("slices", i(), "min", min)}
+                min={0}
+                max={255}
+              />
+              <Input
+                label="Max"
+                value={slice.max}
+                onInput={max => props.setCfg("slices", i(), "max", max)}
+                min={0}
+                max={255}
+              />
+            </div>
+            <div class="flex flex-row gap-1">
+              <Input
+                label="R"
+                value={slice.color[0]}
+                onInput={r => props.setCfg("slices", i(), "color", 0, r)}
+                min={0}
+                max={255}
+              />
+              <Input
+                label="G"
+                value={slice.color[1]}
+                onInput={g => props.setCfg("slices", i(), "color", 1, g)}
+                min={0}
+                max={255}
+              />
+              <Input
+                label="B"
+                value={slice.color[2]}
+                onInput={b => props.setCfg("slices", i(), "color", 2, b)}
+                min={0}
+                max={255}
+              />
+            </div>
+            <Button
+              class="bg-red-400 p-2 text-white hover:bg-red-500"
+              onClick={() => {
+                props.setCfg(
+                  "slices",
+                  props.cfg.slices.filter((_, j) => j !== i())
+                );
+              }}
+            >
+              Remover fatia
+            </Button>
+          </div>
+        )}
+      </For>
+      <Button
+        class="bg-blue-400 p-2 text-white hover:bg-blue-500"
+        onClick={() => {
+          props.setCfg("slices", [
+            ...props.cfg.slices,
+            {
+              min: props.cfg.slices.reduce((acc, curr) => Math.max(acc, curr.max), 0),
+              max: 255,
+              color: [0, 0, 0],
+            },
+          ]);
+        }}
+      >
+        Adicionar fatia
+      </Button>
+    </>
+  ),
+} as const satisfies Partial<
+  Record<PseudoColorization, Component<PseudoColorizationComponentProps>>
+>;
 
 type EnhancementComponentProps = {
   cfg: EnhancementConfig;
