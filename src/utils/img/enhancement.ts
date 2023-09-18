@@ -9,6 +9,9 @@ export const enhancements = {
   square: "Quadrado",
   log: "Logaritmo",
   exponential: "Exponencial",
+  gammaCorrection: "Correção Gamma",
+  histogramEqualization: "Equalização de Histograma",
+  bitSlicing: "Fatiamento de Plano de Bits",
 } as const;
 
 export type Enhancement = keyof typeof enhancements;
@@ -21,9 +24,8 @@ export type Interval = {
 export type EnhancementConfig = {
   interval: Interval;
   multipleParts: { from: Interval; to: Interval }[];
-  binary: {
-    threshold: number;
-  };
+  binary: { threshold: number };
+  gammaCorrection: { gammaFactor: number };
 };
 
 function getInterval(img: Img) {
@@ -53,8 +55,15 @@ export async function enhance(
   enchancement: Enhancement,
   img: Img,
   config: EnhancementConfig
-): Promise<Img> {
+): Promise<Img[]> {
   let output: ImageData;
+
+  if (enchancement === "bitSlicing") {
+    return bitSlicing(img).map(
+      (data, i) =>
+        new Img(`enhancement-${enchancement}-${i}-${img.name}`, data.width, data.height, data.data)
+    );
+  }
 
   switch (enchancement) {
     case "interval":
@@ -81,6 +90,12 @@ export async function enhance(
     case "square":
       output = square(img);
       break;
+    case "gammaCorrection":
+      output = gammaCorrection(img, config.gammaCorrection);
+      break;
+    case "histogramEqualization":
+      output = histogramEqualization(img);
+      break;
   }
 
   const newImg = new Img(
@@ -90,7 +105,7 @@ export async function enhance(
     output.data
   );
 
-  return newImg;
+  return [newImg];
 }
 
 function interval(img: Img, gMin: number, gMax: number) {
@@ -280,6 +295,75 @@ function square(img: Img) {
     output.data[i + 1] = newGreyscale;
     output.data[i + 2] = newGreyscale;
     output.data[i + 3] = img.pixels[i + 3];
+  }
+
+  return output;
+}
+
+function gammaCorrection(img: Img, config: EnhancementConfig["gammaCorrection"]) {
+  const output = new ImageData(img.width, img.height);
+
+  const gammaFactor = 1 / config.gammaFactor;
+
+  for (let i = 0; i < output.data.length; i += 4) {
+    output.data[i + 0] = Math.pow(img.pixels[i + 0] / 255, gammaFactor) * 255;
+    output.data[i + 1] = Math.pow(img.pixels[i + 1] / 255, gammaFactor) * 255;
+    output.data[i + 2] = Math.pow(img.pixels[i + 2] / 255, gammaFactor) * 255;
+    output.data[i + 3] = img.pixels[i + 3];
+  }
+
+  return output;
+}
+
+function histogramEqualization(img: Img) {
+  const output = new ImageData(img.width, img.height);
+  const histogram = new Array<number>(256).fill(0);
+  const cdf = new Array<number>(256).fill(0);
+
+  for (let i = 0; i < img.pixels.length; i += 4) {
+    const greyIntensity = (img.pixels[i + 0] + img.pixels[i + 1] + img.pixels[i + 2]) / 3;
+    histogram[Math.floor(greyIntensity)]++;
+  }
+
+  cdf[0] = histogram[0];
+  for (let i = 1; i < 256; i++) {
+    cdf[i] = cdf[i - 1] + histogram[i];
+  }
+
+  for (let i = 0; i < output.data.length; i += 4) {
+    const greyIntensity = (img.pixels[i + 0] + img.pixels[i + 1] + img.pixels[i + 2]) / 3;
+    const newGreyIntensity = (cdf[Math.floor(greyIntensity)] / cdf[255]) * 255;
+
+    output.data[i + 0] = newGreyIntensity;
+    output.data[i + 1] = newGreyIntensity;
+    output.data[i + 2] = newGreyIntensity;
+    output.data[i + 3] = img.pixels[i + 3];
+  }
+
+  return output;
+}
+
+function bitSlicing(img: Img) {
+  const output = new Array<ImageData>(8);
+
+  for (let i = 0; i < 8; i++) {
+    output[i] = new ImageData(img.width, img.height);
+  }
+
+  for (let i = 0; i < img.pixels.length; i += 4) {
+    const greyIntensity = Math.floor(
+      (img.pixels[i + 0] + img.pixels[i + 1] + img.pixels[i + 2]) / 3
+    );
+
+    for (let j = 0; j < 8; j++) {
+      const bit = (greyIntensity >> j) & 1;
+      const value = bit * 255;
+
+      output[j].data[i + 0] = value;
+      output[j].data[i + 1] = value;
+      output[j].data[i + 2] = value;
+      output[j].data[i + 3] = img.pixels[i + 3];
+    }
   }
 
   return output;

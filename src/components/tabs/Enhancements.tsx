@@ -9,7 +9,7 @@ import { Input } from "../Input";
 
 type Props = {
   image?: Img;
-  onOutput: (img: Img) => void;
+  onOutput: (imgs: Img[]) => void;
 };
 
 export const Enhancements: Component<Props> = props => {
@@ -35,6 +35,9 @@ export const Enhancements: Component<Props> = props => {
     binary: {
       threshold: 127,
     },
+    gammaCorrection: {
+      gammaFactor: 1,
+    },
   });
 
   return (
@@ -47,8 +50,8 @@ export const Enhancements: Component<Props> = props => {
               fallback={
                 <Button
                   onClick={async () => {
-                    const img = await enhance(en, props.image!, enhancementCfg);
-                    props.onOutput(img);
+                    const imgs = await enhance(en, props.image!, enhancementCfg);
+                    props.onOutput(imgs);
                   }}
                   disabled={!props.image}
                 >
@@ -67,8 +70,8 @@ export const Enhancements: Component<Props> = props => {
                     <Button
                       class="bg-blue-400 p-2 text-white hover:bg-blue-500"
                       onClick={async () => {
-                        const img = await enhance(en, props.image!, enhancementCfg);
-                        props.onOutput(img);
+                        const imgs = await enhance(en, props.image!, enhancementCfg);
+                        props.onOutput(imgs);
                       }}
                       disabled={!props.image}
                     >
@@ -197,5 +200,16 @@ const enhancementComponents = {
       min={0}
       max={255}
     />
+  ),
+  gammaCorrection: props => (
+    <>
+      <Input
+        float
+        label="Fator Gama"
+        value={props.cfg.gammaCorrection.gammaFactor}
+        onInput={gammaFactor => props.setCfg("gammaCorrection", "gammaFactor", gammaFactor)}
+        min={0}
+      />
+    </>
   ),
 } as const satisfies Partial<Record<Enhancement, Component<EnhancementComponentProps>>>;
