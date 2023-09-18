@@ -65,53 +65,40 @@ export async function lowPassFilter(
     output.data[i + 0] = r;
     output.data[i + 1] = g;
     output.data[i + 2] = b;
-    output.data[i + 3] = 255;
+    output.data[i + 3] = img.pixels[i + 3];
   }
 
   return new Img(`low-pass-filter-${filter}-${img.name}`, output.width, output.height, output.data);
 }
 
 function getMean(img: Img, i: number, halfSize: number): [number, number, number] {
-  let r = 0;
-  let g = 0;
-  let b = 0;
-
-  const x = Math.floor(i / 4) % img.width;
-  const y = Math.floor(i / 4) / img.width;
-
-  if (x < halfSize) {
-    i += (halfSize - x) * 4;
-  } else if (x > img.width - halfSize) {
-    i -= (x - (img.width - halfSize)) * 4;
-  }
-
-  if (y < halfSize) {
-    i += (halfSize - y) * img.width * 4;
-  } else if (y > img.height - halfSize) {
-    i -= (y - (img.height - halfSize)) * img.width * 4;
-  }
+  let v = 0;
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      const index = i + x * 4 + y * img.width * 4;
+      let index = i + x * 4 + y * img.width * 4;
 
-      r += img.pixels[index + 0];
-      g += img.pixels[index + 1];
-      b += img.pixels[index + 2];
+      if (index < 0) {
+        index = 0;
+      } else if (index >= img.pixels.length) {
+        index = img.pixels.length - 4;
+      }
+
+      const r = img.pixels[index + 0];
+      const g = img.pixels[index + 1];
+      const b = img.pixels[index + 2];
+
+      v += (r + g + b) / 3;
     }
   }
 
   const size = (halfSize * 2 + 1) ** 2;
 
-  r /= size;
-  g /= size;
-  b /= size;
+  v /= size;
 
-  r = Math.max(0, Math.min(255, Math.round(r)));
-  g = Math.max(0, Math.min(255, Math.round(g)));
-  b = Math.max(0, Math.min(255, Math.round(b)));
+  v = Math.max(0, Math.min(255, Math.round(v)));
 
-  return [r, g, b];
+  return [v, v, v];
 }
 
 function getMedian(img: Img, i: number, halfSize: number): [number, number, number] {
@@ -119,7 +106,13 @@ function getMedian(img: Img, i: number, halfSize: number): [number, number, numb
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      const index = i + x * 4 + y * img.width * 4;
+      let index = i + x * 4 + y * img.width * 4;
+
+      if (index < 0) {
+        index = 0;
+      } else if (index >= img.pixels.length) {
+        index = img.pixels.length - 4;
+      }
 
       const r = img.pixels[index + 0];
       const g = img.pixels[index + 1];
@@ -133,9 +126,9 @@ function getMedian(img: Img, i: number, halfSize: number): [number, number, numb
 
   values.sort((a, b) => a - b);
 
-  const r = values[Math.floor(values.length / 2)];
+  const v = values[Math.floor(values.length / 2)];
 
-  return [r, r, r];
+  return [v, v, v];
 }
 
 function getMaximum(img: Img, i: number, halfSize: number): [number, number, number] {
@@ -145,7 +138,13 @@ function getMaximum(img: Img, i: number, halfSize: number): [number, number, num
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      const index = i + x * 4 + y * img.width * 4;
+      let index = i + x * 4 + y * img.width * 4;
+
+      if (index < 0) {
+        index = 0;
+      } else if (index >= img.pixels.length) {
+        index = img.pixels.length - 4;
+      }
 
       r = Math.max(r, img.pixels[index + 0]);
       g = Math.max(g, img.pixels[index + 1]);
@@ -163,7 +162,13 @@ function getMinimum(img: Img, i: number, halfSize: number): [number, number, num
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      const index = i + x * 4 + y * img.width * 4;
+      let index = i + x * 4 + y * img.width * 4;
+
+      if (index < 0) {
+        index = 0;
+      } else if (index >= img.pixels.length) {
+        index = img.pixels.length - 4;
+      }
 
       r = Math.min(r, img.pixels[index + 0]);
       g = Math.min(g, img.pixels[index + 1]);
@@ -179,7 +184,13 @@ function getMode(img: Img, i: number, halfSize: number): [number, number, number
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      const index = i + x * 4 + y * img.width * 4;
+      let index = i + x * 4 + y * img.width * 4;
+
+      if (index < 0) {
+        index = 0;
+      } else if (index >= img.pixels.length) {
+        index = img.pixels.length - 4;
+      }
 
       values.push(img.pixels[index + 0]);
       values.push(img.pixels[index + 1]);
@@ -231,9 +242,9 @@ function getKuwahara(img: Img, i: number): [number, number, number] {
 
   const standardDeviation = Math.sqrt(variance);
 
-  const r = Math.max(0, Math.min(255, Math.round(mean + 0.4 * standardDeviation)));
+  const v = Math.max(0, Math.min(255, Math.round(mean + 0.4 * standardDeviation)));
 
-  return [r, r, r];
+  return [v, v, v];
 }
 
 function getTomitaTsuji(img: Img, i: number): [number, number, number] {
@@ -257,9 +268,9 @@ function getTomitaTsuji(img: Img, i: number): [number, number, number] {
 
   const standardDeviation = Math.sqrt(variance);
 
-  const r = Math.max(0, Math.min(255, Math.round(mean + 0.4 * standardDeviation)));
+  const v = Math.max(0, Math.min(255, Math.round(mean + 0.4 * standardDeviation)));
 
-  return [r, r, r];
+  return [v, v, v];
 }
 
 function getNagaoMatsuyama(img: Img, i: number): [number, number, number] {
@@ -283,9 +294,9 @@ function getNagaoMatsuyama(img: Img, i: number): [number, number, number] {
 
   values.sort((a, b) => a - b);
 
-  const r = values[Math.floor(values.length / 2)];
+  const v = values[Math.floor(values.length / 2)];
 
-  return [r, r, r];
+  return [v, v, v];
 }
 
 function getSomboonkaew(img: Img, i: number): [number, number, number] {
@@ -309,7 +320,7 @@ function getSomboonkaew(img: Img, i: number): [number, number, number] {
 
   const standardDeviation = Math.sqrt(variance);
 
-  const r = Math.max(0, Math.min(255, Math.round(mean + 0.4 * standardDeviation)));
+  const v = Math.max(0, Math.min(255, Math.round(mean + 0.4 * standardDeviation)));
 
-  return [r, r, r];
+  return [v, v, v];
 }
