@@ -16,6 +16,7 @@ import { Button } from "./components/Button";
 import { Thumbnail } from "./components/Thumbnail";
 import { ColorSchemes } from "./components/tabs/ColorSchemes";
 import { Enhancements } from "./components/tabs/Enhancements";
+import { LowPassFilters } from "./components/tabs/LowPassFilters";
 import { Operations } from "./components/tabs/Operations";
 import { PseudoColorizations } from "./components/tabs/PseudoColorizations";
 import { Transformations } from "./components/tabs/Transformations";
@@ -103,6 +104,7 @@ const App: Component = () => {
         <ColorSchemes image={primaryImg()} onOutput={handleOutput} />
         <PseudoColorizations image={primaryImg()} onOutput={handleOutput} />
         <Enhancements image={primaryImg()} onOutput={handleOutput} />
+        <LowPassFilters image={primaryImg()} onOutput={handleOutput} />
       </aside>
       <div class="h-full w-full overflow-y-scroll bg-slate-100 p-2">
         <Dialog.Root open={showHistogram()} onOpenChange={setShowHistogram}>

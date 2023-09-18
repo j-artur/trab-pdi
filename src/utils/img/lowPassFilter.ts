@@ -3,19 +3,19 @@ import { Img } from ".";
 export const lowPassFilters = {
   mean: "Média",
   median: "Mediana",
-  maximum: "Máximo",
-  minimum: "Mínimo",
   mode: "Moda",
+  minimum: "Mínimo",
+  maximum: "Máximo",
   kawahara: "Kawahara",
-  tomitaTsuji: "Tomita-Tsuji",
-  nagaoMatsuyama: "Nagao-Matsuyama",
+  tomitaTsuji: "Tomita & Tsuji",
+  nagaoMatsuyama: "Nagao & Matsuyama",
   somboonkaew: "Somboonkaew",
 };
 
 export type LowPassFilter = keyof typeof lowPassFilters;
 
 export type LowPassFilterConfig = {
-  halfSize: number;
+  matrixSize: number;
 };
 
 export async function lowPassFilter(
@@ -57,8 +57,10 @@ export async function lowPassFilter(
       break;
   }
 
+  const halfSize = Math.floor(config.matrixSize / 2);
+
   for (let i = 0; i < img.pixels.length; i += 4) {
-    const [r, g, b] = fn(img, i, config.halfSize);
+    const [r, g, b] = fn(img, i, halfSize);
 
     output.data[i + 0] = r;
     output.data[i + 1] = g;
@@ -104,19 +106,21 @@ function getMedian(img: Img, i: number, halfSize: number): [number, number, numb
     for (let y = -halfSize; y <= halfSize; y++) {
       const index = i + x * 4 + y * img.width * 4;
 
-      values.push(img.pixels[index + 0]);
-      values.push(img.pixels[index + 1]);
-      values.push(img.pixels[index + 2]);
+      const r = img.pixels[index + 0];
+      const g = img.pixels[index + 1];
+      const b = img.pixels[index + 2];
+
+      const gray = Math.round((r + g + b) / 3);
+
+      values.push(gray);
     }
   }
 
   values.sort((a, b) => a - b);
 
-  const r = values[Math.floor(values.length / 2) * 3 + 0];
-  const g = values[Math.floor(values.length / 2) * 3 + 1];
-  const b = values[Math.floor(values.length / 2) * 3 + 2];
+  const r = values[Math.floor(values.length / 2)];
 
-  return [r, g, b];
+  return [r, r, r];
 }
 
 function getMaximum(img: Img, i: number, halfSize: number): [number, number, number] {
@@ -138,9 +142,9 @@ function getMaximum(img: Img, i: number, halfSize: number): [number, number, num
 }
 
 function getMinimum(img: Img, i: number, halfSize: number): [number, number, number] {
-  let r = 0;
-  let g = 0;
-  let b = 0;
+  let r = 255;
+  let g = 255;
+  let b = 255;
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
@@ -252,19 +256,21 @@ function getNagaoMatsuyama(img: Img, i: number): [number, number, number] {
     for (let y = -halfSize; y <= halfSize; y++) {
       const index = i + x * 4 + y * img.width * 4;
 
-      values.push(img.pixels[index + 0]);
-      values.push(img.pixels[index + 1]);
-      values.push(img.pixels[index + 2]);
+      const r = img.pixels[index + 0];
+      const g = img.pixels[index + 1];
+      const b = img.pixels[index + 2];
 
-      values.sort((a, b) => a - b);
+      const gray = Math.round((r + g + b) / 3);
+
+      values.push(gray);
     }
   }
 
-  const r = values[Math.floor(values.length / 2) * 3 + 0];
-  const g = values[Math.floor(values.length / 2) * 3 + 1];
-  const b = values[Math.floor(values.length / 2) * 3 + 2];
+  values.sort((a, b) => a - b);
 
-  return [r, g, b];
+  const r = values[Math.floor(values.length / 2)];
+
+  return [r, r, r];
 }
 
 function getSomboonkaew(img: Img, i: number): [number, number, number] {
