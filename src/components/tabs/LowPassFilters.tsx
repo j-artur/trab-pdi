@@ -29,7 +29,7 @@ export const LowPassFilters: Component<Props> = props => {
           label="Tamanho da Matriz"
           value={lowPassFilterCfg.matrixSize}
           onInput={matrixSize => setLowPassFilterCfg("matrixSize", matrixSize)}
-          min={3}
+          min={1}
         />
       </div>
       <div class="flex flex-col gap-1 p-2">
