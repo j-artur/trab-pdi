@@ -28,7 +28,9 @@ export const Input = (props: InputProps) => {
           } else if (!!props.min && n < props.min) {
             n = props.min;
           }
-          e.currentTarget.value = n.toString();
+          if (Number(e.currentTarget.value) !== n) {
+            e.currentTarget.value = n.toString();
+          }
           props.onInput(n);
         }}
         min={props.min}
