@@ -1,6 +1,7 @@
+import { createEffect } from "solid-js";
 import { clx } from "../utils";
 
-type InputProps = {
+type InputProps = ({ int: true } | { float: true }) & {
   label: string;
   value: number;
   onInput: (n: number) => void;
@@ -11,8 +12,8 @@ type InputProps = {
 
 export const Input = (props: InputProps) => {
   return (
-    <div class="flex flex-row items-center text-sm">
-      <label class="mr-2 w-full font-medium text-slate-900">{props.label}</label>
+    <div class="flex w-full flex-col text-sm">
+      <label class="ml-1 truncate font-medium text-slate-900">{props.label}</label>
       <input
         type="number"
         class={clx(
@@ -20,7 +21,19 @@ export const Input = (props: InputProps) => {
           props.class
         )}
         value={props.value}
-        onInput={e => props.onInput(parseInt((e.target as HTMLInputElement).value))}
+        onInput={e => {
+          let n = Number(e.currentTarget.value);
+          if (!!props.max && n > props.max) {
+            n = props.max;
+          } else if (!!props.min && n < props.min) {
+            n = props.min;
+          }
+          e.currentTarget.value = n.toString();
+          props.onInput(n);
+        }}
+        min={props.min}
+        max={props.max}
+        step={"int" in props ? 1 : 0.1}
       />
     </div>
   );

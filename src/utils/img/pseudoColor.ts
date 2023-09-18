@@ -9,6 +9,10 @@ export type PseudoColorization = keyof typeof pseudoColorizations;
 
 export type PseudoColorizationConfig = {
   slices: { min: number; max: number; color: [number, number, number] }[];
+  redistribution: {
+    brightness: number;
+    color: [number, number, number];
+  }[];
 };
 
 export async function pseudoColorize(
@@ -23,7 +27,7 @@ export async function pseudoColorize(
       output = densitySlicing(img, config.slices);
       break;
     case "redistribution":
-      output = redistribution(img);
+      output = redistribution(img, config.redistribution);
       break;
   }
 
@@ -57,50 +61,62 @@ function densitySlicing(img: Img, config: PseudoColorizationConfig["slices"]) {
   return output;
 }
 
-function redistribution(img: Img) {
+function redistribution(img: Img, config: PseudoColorizationConfig["redistribution"]) {
   const output = new ImageData(img.width, img.height);
 
-  const min = {
-    r: 255,
-    g: 255,
-    b: 255,
-  };
+  const slices = config
+    .slice()
+    .sort((a, b) => a.brightness - b.brightness)
+    .map((s, _, arr) => {
+      // mininum must be 0 if it's the first slice, otherwise it's 1 value above the previous slice
+      const min = arr.indexOf(s) === 0 ? 0 : arr[arr.indexOf(s) - 1].brightness + 1;
+      // maximum must be 255 if it's the last slice, otherwise it's 1 value below the next slice
+      const max = arr.indexOf(s) === arr.length - 1 ? 255 : arr[arr.indexOf(s) + 1].brightness - 1;
 
-  const max = {
-    r: 0,
-    g: 0,
-    b: 0,
-  };
+      return {
+        min,
+        max,
+        brightness: s.brightness,
+        color: s.color,
+      };
+    });
 
-  for (let i = 0; i < output.data.length; i += 4) {
-    min.r = Math.min(min.r, img.pixels[i + 0]);
-    min.g = Math.min(min.g, img.pixels[i + 1]);
-    min.b = Math.min(min.b, img.pixels[i + 2]);
+  function newValue(brightness: number): [number, number, number] {
+    const color: [number, number, number] = [0, 0, 0];
 
-    max.r = Math.max(max.r, img.pixels[i + 0]);
-    max.g = Math.max(max.g, img.pixels[i + 1]);
-    max.b = Math.max(max.b, img.pixels[i + 2]);
+    for (const slice of slices) {
+      if (brightness >= slice.min && brightness <= slice.max) {
+        const diff =
+          1 -
+          (brightness > slice.brightness
+            ? (brightness - slice.brightness) / (slice.max - slice.brightness)
+            : (slice.brightness - brightness) / (slice.brightness - slice.min));
+
+        color[0] += Math.round(slice.color[0] * diff);
+        color[1] += Math.round(slice.color[1] * diff);
+        color[2] += Math.round(slice.color[2] * diff);
+      }
+    }
+
+    color[0] = Math.min(255, Math.max(0, color[0]));
+    color[1] = Math.min(255, Math.max(0, color[1]));
+    color[2] = Math.min(255, Math.max(0, color[2]));
+
+    return color;
   }
 
+  // equalize histogram in each channel
+  // then use the brightness to redistribute the colors in accordance with the config
   for (let i = 0; i < output.data.length; i += 4) {
-    output.data[i + 3] = img.pixels[i + 3];
-
     const r = img.pixels[i + 0];
     const g = img.pixels[i + 1];
     const b = img.pixels[i + 2];
 
-    output.data[i + 0] = Math.min(
-      255,
-      Math.max(0, Math.round(((r - min.r) / (max.r - min.r)) * 255))
-    );
-    output.data[i + 1] = Math.min(
-      255,
-      Math.max(0, Math.round(((g - min.g) / (max.g - min.g)) * 255))
-    );
-    output.data[i + 2] = Math.min(
-      255,
-      Math.max(0, Math.round(((b - min.b) / (max.b - min.b)) * 255))
-    );
+    const [newR, newG, newB] = newValue((r + g + b) / 3);
+
+    output.data[i + 0] = Math.min(255, Math.max(0, newR));
+    output.data[i + 1] = Math.min(255, Math.max(0, newG));
+    output.data[i + 2] = Math.min(255, Math.max(0, newB));
     output.data[i + 3] = img.pixels[i + 3];
   }
 

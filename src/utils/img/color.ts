@@ -9,7 +9,7 @@ export const colorSchemes = {
   YUV: "YUV",
   YIQ: "YIQ",
   YCbCr: "YCbCr",
-  YDbDr: "YDbDr",
+  YPbPr: "YPbBr",
   greyscale: "Escala de cinza",
 } as const;
 
@@ -115,12 +115,70 @@ function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
   return [h, s, v];
 }
 
+function hueToRgb(h: number): [number, number, number] {
+  let r: number;
+  let g: number;
+  let b: number;
+
+  const i = Math.floor(h * 6);
+  const f = h * 6 - i;
+
+  switch (i % 6) {
+    case 0:
+      [r, g, b] = [1, f, 0];
+      break;
+    case 1:
+      [r, g, b] = [1 - f, 1, 0];
+      break;
+    case 2:
+      [r, g, b] = [0, 1, f];
+      break;
+    case 3:
+      [r, g, b] = [0, 1 - f, 1];
+      break;
+    case 4:
+      [r, g, b] = [f, 0, 1];
+      break;
+    case 5:
+      [r, g, b] = [1, 0, 1 - f];
+      break;
+    default:
+      throw new Error("Invalid color");
+  }
+
+  r = Math.round(r * 255);
+  g = Math.round(g * 255);
+  b = Math.round(b * 255);
+
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+
+  return [r, g, b];
+}
+
 function rgbToYuv(r: number, g: number, b: number): [number, number, number] {
   const y = 0.299 * r + 0.587 * g + 0.114 * b;
   const u = -0.14713 * r - 0.28886 * g + 0.436 * b;
   const v = 0.615 * r - 0.51499 * g - 0.132 * b;
 
   return [y, u, v];
+}
+
+function yuvToRgb(y: number, u: number, v: number): [number, number, number] {
+  let r = 1 * y + 0 * u + 1.13983 * v;
+  let g = 1 * y - 0.39465 * u - 0.5806 * v;
+  let b = 1 * y + 2.03211 * u + 0 * v;
+
+  r = Math.round(r);
+  g = Math.round(g);
+  b = Math.round(b);
+
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+
+  return [r, g, b];
 }
 
 function rgbToYiq(r: number, g: number, b: number): [number, number, number] {
@@ -131,20 +189,61 @@ function rgbToYiq(r: number, g: number, b: number): [number, number, number] {
   return [y, i, q];
 }
 
+function yiqToRgb(y: number, i: number, q: number): [number, number, number] {
+  const r = 1 * y + 0.956 * i + 0.621 * q;
+  const g = 1 * y - 0.272 * i - 0.647 * q;
+  const b = 1 * y - 1.106 * i + 1.703 * q;
+
+  return [r, g, b];
+}
+
 function rgbToYCbCr(r: number, g: number, b: number): [number, number, number] {
-  const y = 0.299 * r + 0.587 * g + 0.114 * b;
-  const cb = -0.168736 * r - 0.331264 * g + 0.5 * b + 128;
-  const cr = 0.5 * r - 0.418688 * g - 0.081312 * b + 128;
+  let y = 0.299 * r + 0.587 * g + 0.114 * b;
+  let cb = -0.168736 * r - 0.331264 * g + 0.5 * b + 128;
+  let cr = 0.5 * r - 0.418688 * g - 0.081312 * b + 128;
 
   return [y, cb, cr];
 }
 
-function rgbToYDbDr(r: number, g: number, b: number): [number, number, number] {
-  const y = 0.299 * r + 0.587 * g + 0.114 * b;
-  const db = -0.45 * r - 0.883 * g + 1.333 * b;
-  const dr = -1.333 * r + 1.116 * g + 0.217 * b;
+function yCbCrToRgb(y: number, cb: number, cr: number): [number, number, number] {
+  let r = 1 * y + 0 * (cb - 128) + 1.402 * (cr - 128);
+  let g = 1 * y - 0.34414 * (cb - 128) - 0.71414 * (cr - 128);
+  let b = 1 * y + 1.772 * (cb - 128) + 0 * (cr - 128);
 
-  return [y, db, dr];
+  r = Math.round(r);
+  g = Math.round(g);
+  b = Math.round(b);
+
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+
+  return [r, g, b];
+}
+
+function rgbToYPbPr(r: number, g: number, b: number): [number, number, number] {
+  let y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+  let pb = b - y;
+  let pr = r - y;
+
+  return [y, pb, pr];
+}
+
+function yPbPrToRgb(y: number, pb: number, pr: number): [number, number, number] {
+  let r = pr + y;
+  let b = pb + y;
+  let g = (y - 0.2126 * r - 0.0722 * b) / 0.7152;
+
+  r = Math.round(r);
+  g = Math.round(g);
+  b = Math.round(b);
+
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+
+  return [r, g, b];
 }
 
 function rgbToGreyscale(r: number, g: number, b: number): number {
@@ -169,8 +268,8 @@ export async function splitColorspace(scheme: ColorScheme, img: Img): Promise<Im
       return splitYIQ(img);
     case "YCbCr":
       return splitYCbCr(img);
-    case "YDbDr":
-      return splitYDbDr(img);
+    case "YPbPr":
+      return splitYPbPr(img);
     case "greyscale":
       return [greyscale(img)];
   }
@@ -355,9 +454,11 @@ function splitHSL(img: Img): Img[] {
       const s_ = hsl[1] * 255;
       const l_ = hsl[2] * 255;
 
-      h.pixels[i + 0] = h_;
-      h.pixels[i + 1] = h_;
-      h.pixels[i + 2] = h_;
+      const rgb = hueToRgb(hsl[0]);
+
+      h.pixels[i + 0] = rgb[0];
+      h.pixels[i + 1] = rgb[1];
+      h.pixels[i + 2] = rgb[2];
       s.pixels[i + 0] = s_;
       s.pixels[i + 1] = s_;
       s.pixels[i + 2] = s_;
@@ -408,9 +509,11 @@ function splitHSV(img: Img): Img[] {
       const s_ = hsv[1] * 255;
       const v_ = hsv[2] * 255;
 
-      h.pixels[i + 0] = h_;
-      h.pixels[i + 1] = h_;
-      h.pixels[i + 2] = h_;
+      const rgb = hueToRgb(hsv[0]);
+
+      h.pixels[i + 0] = rgb[0];
+      h.pixels[i + 1] = rgb[1];
+      h.pixels[i + 2] = rgb[2];
       s.pixels[i + 0] = s_;
       s.pixels[i + 1] = s_;
       s.pixels[i + 2] = s_;
@@ -461,15 +564,18 @@ function splitYUV(img: Img): Img[] {
       const u__ = yuv[1];
       const v__ = yuv[2];
 
+      const rgbU = yuvToRgb(127, u__, 0);
+      const rgbV = yuvToRgb(127, 0, v__);
+
       y.pixels[i + 0] = y__;
       y.pixels[i + 1] = y__;
       y.pixels[i + 2] = y__;
-      u.pixels[i + 0] = u__;
-      u.pixels[i + 1] = u__;
-      u.pixels[i + 2] = u__;
-      v.pixels[i + 0] = v__;
-      v.pixels[i + 1] = v__;
-      v.pixels[i + 2] = v__;
+      u.pixels[i + 0] = rgbU[0];
+      u.pixels[i + 1] = rgbU[1];
+      u.pixels[i + 2] = rgbU[2];
+      v.pixels[i + 0] = rgbV[0];
+      v.pixels[i + 1] = rgbV[1];
+      v.pixels[i + 2] = rgbV[2];
 
       y.pixels[i + 3] = img.pixels[i + 3];
       u.pixels[i + 3] = img.pixels[i + 3];
@@ -514,15 +620,18 @@ function splitYIQ(img: Img): Img[] {
       const i__ = yiq[1];
       const q__ = yiq[2];
 
+      const rgbI = yiqToRgb(127, i__, 0);
+      const rgbQ = yiqToRgb(127, 0, q__);
+
       y.pixels[i_ + 0] = y__;
       y.pixels[i_ + 1] = y__;
       y.pixels[i_ + 2] = y__;
-      i.pixels[i_ + 0] = i__;
-      i.pixels[i_ + 1] = i__;
-      i.pixels[i_ + 2] = i__;
-      q.pixels[i_ + 0] = q__;
-      q.pixels[i_ + 1] = q__;
-      q.pixels[i_ + 2] = q__;
+      i.pixels[i_ + 0] = rgbI[0];
+      i.pixels[i_ + 1] = rgbI[1];
+      i.pixels[i_ + 2] = rgbI[2];
+      q.pixels[i_ + 0] = rgbQ[0];
+      q.pixels[i_ + 1] = rgbQ[1];
+      q.pixels[i_ + 2] = rgbQ[2];
 
       y.pixels[i_ + 3] = img.pixels[i_ + 3];
       i.pixels[i_ + 3] = img.pixels[i_ + 3];
@@ -567,15 +676,18 @@ function splitYCbCr(img: Img): Img[] {
       const cb__ = ycbcr[1];
       const cr__ = ycbcr[2];
 
+      const rgbCb = yCbCrToRgb(127, cb__, 127);
+      const rgbCr = yCbCrToRgb(127, 127, cr__);
+
       y.pixels[i + 0] = y__;
       y.pixels[i + 1] = y__;
       y.pixels[i + 2] = y__;
-      cb.pixels[i + 0] = cb__;
-      cb.pixels[i + 1] = cb__;
-      cb.pixels[i + 2] = cb__;
-      cr.pixels[i + 0] = cr__;
-      cr.pixels[i + 1] = cr__;
-      cr.pixels[i + 2] = cr__;
+      cb.pixels[i + 0] = rgbCb[0];
+      cb.pixels[i + 1] = rgbCb[1];
+      cb.pixels[i + 2] = rgbCb[2];
+      cr.pixels[i + 0] = rgbCr[0];
+      cr.pixels[i + 1] = rgbCr[1];
+      cr.pixels[i + 2] = rgbCr[2];
 
       y.pixels[i + 3] = img.pixels[i + 3];
       cb.pixels[i + 3] = img.pixels[i + 3];
@@ -586,21 +698,21 @@ function splitYCbCr(img: Img): Img[] {
   return [y, cb, cr];
 }
 
-function splitYDbDr(img: Img): Img[] {
+function splitYPbPr(img: Img): Img[] {
   const y = new Img(
-    `YDbDr_Y-${img.name}`,
+    `YPbPr_Y-${img.name}`,
     img.width,
     img.height,
     new Uint8ClampedArray(img.pixels.length)
   );
-  const db = new Img(
-    `YDbDr_Db-${img.name}`,
+  const pb = new Img(
+    `YPbPr_Pb-${img.name}`,
     img.width,
     img.height,
     new Uint8ClampedArray(img.pixels.length)
   );
-  const dr = new Img(
-    `YDbDr_Dr-${img.name}`,
+  const pr = new Img(
+    `YPbPr_Pr-${img.name}`,
     img.width,
     img.height,
     new Uint8ClampedArray(img.pixels.length)
@@ -614,29 +726,32 @@ function splitYDbDr(img: Img): Img[] {
       const g = img.pixels[i + 1];
       const b = img.pixels[i + 2];
 
-      const ydbdr = rgbToYDbDr(r, g, b);
+      const ypbpr = rgbToYPbPr(r, g, b);
 
-      const y__ = ydbdr[0];
-      const db__ = ydbdr[1];
-      const dr__ = ydbdr[2];
+      const y__ = ypbpr[0];
+      const pb__ = ypbpr[1];
+      const pr__ = ypbpr[2];
+
+      const rgbPb = yPbPrToRgb(127, pb__, 0);
+      const rgbPr = yPbPrToRgb(127, 0, pr__);
 
       y.pixels[i + 0] = y__;
       y.pixels[i + 1] = y__;
       y.pixels[i + 2] = y__;
-      db.pixels[i + 0] = db__;
-      db.pixels[i + 1] = db__;
-      db.pixels[i + 2] = db__;
-      dr.pixels[i + 0] = dr__;
-      dr.pixels[i + 1] = dr__;
-      dr.pixels[i + 2] = dr__;
+      pb.pixels[i + 0] = rgbPb[0];
+      pb.pixels[i + 1] = rgbPb[1];
+      pb.pixels[i + 2] = rgbPb[2];
+      pr.pixels[i + 0] = rgbPr[0];
+      pr.pixels[i + 1] = rgbPr[1];
+      pr.pixels[i + 2] = rgbPr[2];
 
       y.pixels[i + 3] = img.pixels[i + 3];
-      db.pixels[i + 3] = img.pixels[i + 3];
-      dr.pixels[i + 3] = img.pixels[i + 3];
+      pb.pixels[i + 3] = img.pixels[i + 3];
+      pr.pixels[i + 3] = img.pixels[i + 3];
     }
   }
 
-  return [y, db, dr];
+  return [y, pb, pr];
 }
 
 function greyscale(img: Img): Img {

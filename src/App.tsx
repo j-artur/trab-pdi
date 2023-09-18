@@ -97,6 +97,11 @@ const App: Component = () => {
       { min: 85, max: 170, color: [0, 255, 0] },
       { min: 170, max: 255, color: [0, 0, 255] },
     ],
+    redistribution: [
+      { brightness: 255, color: [255, 0, 0] },
+      { brightness: 127, color: [0, 255, 0] },
+      { brightness: 0, color: [0, 0, 255] },
+    ],
   });
 
   const [outputs, setOutputs] = createSignal<Img[]>([]);
@@ -143,7 +148,7 @@ const App: Component = () => {
 
   return (
     <div class="flex h-full w-full flex-row">
-      <aside class="flex w-96 flex-none flex-col gap-1 overflow-y-auto bg-slate-200">
+      <aside class="flex w-96 flex-none flex-col gap-1 overflow-y-scroll bg-slate-200">
         <Collapsible title="Operações">
           <div class="p-2">
             <RadioGroup
@@ -189,25 +194,28 @@ const App: Component = () => {
           <div class="flex flex-col gap-1 p-2">
             <For each={Object.keys(transformations) as Transformation[]}>
               {tr => (
-                <Collapsible title={transformations[tr]}>
-                  <div class="flex flex-col gap-2 p-2">
-                    <Dynamic
-                      component={transformationComponents[tr]}
-                      cfg={transformCfg}
-                      setCfg={setTransformCfg}
-                      primaryImage={images()[primaryImage()!]}
-                    />
-                    <Button
-                      onClick={async () => {
-                        const img = await transform(tr, images()[primaryImage()!], transformCfg);
-                        setOutputs([...outputs(), img]);
-                      }}
-                      disabled={primaryImage() === undefined}
-                    >
-                      Aplicar
-                    </Button>
-                  </div>
-                </Collapsible>
+                <div class="bg-slate-100 shadow">
+                  <Collapsible title={transformations[tr]}>
+                    <div class="flex flex-col gap-2 p-2">
+                      <Dynamic
+                        component={transformationComponents[tr]}
+                        cfg={transformCfg}
+                        setCfg={setTransformCfg}
+                        primaryImage={images()[primaryImage()!]}
+                      />
+                      <Button
+                        class="bg-blue-400 p-2 text-white hover:bg-blue-500"
+                        onClick={async () => {
+                          const img = await transform(tr, images()[primaryImage()!], transformCfg);
+                          setOutputs([...outputs(), img]);
+                        }}
+                        disabled={primaryImage() === undefined}
+                      >
+                        Aplicar
+                      </Button>
+                    </div>
+                  </Collapsible>
+                </div>
               )}
             </For>
           </div>
@@ -215,6 +223,7 @@ const App: Component = () => {
         <Collapsible title="Zoom">
           <div class="flex gap-2 p-2">
             <Input
+              int
               label="Quantidade"
               value={zoomCfg().amount}
               onInput={amount => setZoomCfg({ amount })}
@@ -255,28 +264,11 @@ const App: Component = () => {
             </For>
           </div>
         </Collapsible>
-        <Collapsible title="Pseudo-colorização">
+        <Collapsible title="Pseudo-coloração">
           <div class="flex flex-col gap-1 p-2">
             <For each={Object.keys(pseudoColorizations) as PseudoColorization[]}>
               {pseudoColor => (
-                <Show
-                  when={pseudoColor in pseudoColorComponents}
-                  fallback={
-                    <Button
-                      onClick={async () => {
-                        const img = await pseudoColorize(
-                          pseudoColor,
-                          images()[primaryImage()!],
-                          pseudoColorCfg
-                        );
-                        setOutputs([...outputs(), img]);
-                      }}
-                      disabled={primaryImage() === undefined}
-                    >
-                      {pseudoColorizations[pseudoColor]}
-                    </Button>
-                  }
-                >
+                <div class="bg-slate-100 shadow">
                   <Collapsible title={pseudoColorizations[pseudoColor]}>
                     <div class="flex flex-col gap-2 p-2">
                       <Dynamic
@@ -287,6 +279,7 @@ const App: Component = () => {
                         setCfg={setPseudoColorCfg}
                       />
                       <Button
+                        class="bg-blue-400 p-2 text-white hover:bg-blue-500"
                         onClick={async () => {
                           const img = await pseudoColorize(
                             pseudoColor,
@@ -301,7 +294,7 @@ const App: Component = () => {
                       </Button>
                     </div>
                   </Collapsible>
-                </Show>
+                </div>
               )}
             </For>
           </div>
@@ -324,24 +317,33 @@ const App: Component = () => {
                     </Button>
                   }
                 >
-                  <Collapsible title={enhancements[en]}>
-                    <div class="flex flex-col gap-2 p-2">
-                      <Dynamic
-                        component={enhancementComponents[en as keyof typeof enhancementComponents]}
-                        cfg={enhancementCfg}
-                        setCfg={setEnhancementCfg}
-                      />
-                      <Button
-                        onClick={async () => {
-                          const img = await enhance(en, images()[primaryImage()!], enhancementCfg);
-                          setOutputs([...outputs(), img]);
-                        }}
-                        disabled={primaryImage() === undefined}
-                      >
-                        Aplicar
-                      </Button>
-                    </div>
-                  </Collapsible>
+                  <div class="bg-slate-100 shadow">
+                    <Collapsible title={enhancements[en]}>
+                      <div class="flex flex-col gap-2 p-2">
+                        <Dynamic
+                          component={
+                            enhancementComponents[en as keyof typeof enhancementComponents]
+                          }
+                          cfg={enhancementCfg}
+                          setCfg={setEnhancementCfg}
+                        />
+                        <Button
+                          class="bg-blue-400 p-2 text-white hover:bg-blue-500"
+                          onClick={async () => {
+                            const img = await enhance(
+                              en,
+                              images()[primaryImage()!],
+                              enhancementCfg
+                            );
+                            setOutputs([...outputs(), img]);
+                          }}
+                          disabled={primaryImage() === undefined}
+                        >
+                          Aplicar
+                        </Button>
+                      </div>
+                    </Collapsible>
+                  </div>
                 </Show>
               )}
             </For>
@@ -362,16 +364,15 @@ const App: Component = () => {
               hidden
               ref={ref => (inputEl = ref)}
             />
-
-            <button
-              class="self-start rounded border p-2"
+            <Button
+              class="self-start bg-blue-400 text-white hover:bg-blue-500"
               onClick={e => {
                 e.preventDefault();
                 inputEl?.click();
               }}
             >
               Adicionar Imagens
-            </button>
+            </Button>
           </div>
           <ul class="flex h-full max-w-full flex-row flex-wrap items-start gap-2 p-2">
             <For each={images()}>
@@ -399,7 +400,6 @@ const App: Component = () => {
                       }
                     }
                   }}
-                  title={`${img.width}x${img.height}`}
                 >
                   <div class="absolute right-0 top-0 hidden p-1 group-hover:block">
                     <Button onClick={() => setImages(images().filter(i => i !== img))}>
@@ -419,7 +419,7 @@ const App: Component = () => {
           <ul class="flex h-full max-w-full flex-row flex-wrap items-start gap-2 p-2">
             <For each={outputs()}>
               {img => (
-                <li class="group relative" title={`${img.width}x${img.height}`}>
+                <li class="group relative">
                   <div class="absolute right-0 top-0 hidden p-1 group-hover:block">
                     <Button onClick={() => setOutputs(outputs().filter(i => i !== img))}>
                       <XIcon class="text-red-500" />
@@ -447,6 +447,7 @@ const transformationComponents = {
   translate: props => (
     <>
       <Input
+        int
         label="X"
         value={props.cfg.translate.x}
         onInput={x => props.setCfg("translate", "x", x)}
@@ -454,6 +455,7 @@ const transformationComponents = {
         max={props.primaryImage?.width}
       />
       <Input
+        int
         label="Y"
         value={props.cfg.translate.y}
         onInput={y => props.setCfg("translate", "y", y)}
@@ -465,6 +467,7 @@ const transformationComponents = {
   rotate: props => (
     <>
       <Input
+        int
         label="X Origem"
         value={props.cfg.rotate.origin.x}
         onInput={x => props.setCfg("rotate", "origin", "x", x)}
@@ -472,6 +475,7 @@ const transformationComponents = {
         max={props.primaryImage?.width}
       />
       <Input
+        int
         label="Y Origem"
         value={props.cfg.rotate.origin.y}
         onInput={y => props.setCfg("rotate", "origin", "y", y)}
@@ -479,6 +483,7 @@ const transformationComponents = {
         max={props.primaryImage?.height}
       />
       <Input
+        float
         label="Ângulo"
         value={props.cfg.rotate.angle}
         onInput={angle => props.setCfg("rotate", "angle", angle)}
@@ -489,8 +494,18 @@ const transformationComponents = {
   ),
   scale: props => (
     <>
-      <Input label="X" value={props.cfg.scale.x} onInput={x => props.setCfg("scale", "x", x)} />
-      <Input label="Y" value={props.cfg.scale.y} onInput={y => props.setCfg("scale", "y", y)} />
+      <Input
+        float
+        label="X"
+        value={props.cfg.scale.x}
+        onInput={x => props.setCfg("scale", "x", x)}
+      />
+      <Input
+        float
+        label="Y"
+        value={props.cfg.scale.y}
+        onInput={y => props.setCfg("scale", "y", y)}
+      />
     </>
   ),
   reflect: props => (
@@ -509,8 +524,18 @@ const transformationComponents = {
   ),
   shear: props => (
     <>
-      <Input label="X" value={props.cfg.shear.x} onInput={x => props.setCfg("shear", "x", x)} />
-      <Input label="Y" value={props.cfg.shear.y} onInput={y => props.setCfg("shear", "y", y)} />
+      <Input
+        float
+        label="X"
+        value={props.cfg.shear.x}
+        onInput={x => props.setCfg("shear", "x", x)}
+      />
+      <Input
+        float
+        label="Y"
+        value={props.cfg.shear.y}
+        onInput={y => props.setCfg("shear", "y", y)}
+      />
     </>
   ),
 } as const satisfies Record<Transformation, Component<TransformationComponentProps>>;
@@ -525,9 +550,10 @@ const pseudoColorComponents = {
     <>
       <For each={props.cfg.slices}>
         {(slice, i) => (
-          <div class="flex flex-col gap-1 p-1">
+          <div class="flex flex-col gap-1 bg-slate-50 p-1 shadow">
             <div class="flex flex-row gap-1">
               <Input
+                int
                 label="Min"
                 value={slice.min}
                 onInput={min => props.setCfg("slices", i(), "min", min)}
@@ -535,6 +561,7 @@ const pseudoColorComponents = {
                 max={255}
               />
               <Input
+                int
                 label="Max"
                 value={slice.max}
                 onInput={max => props.setCfg("slices", i(), "max", max)}
@@ -544,6 +571,7 @@ const pseudoColorComponents = {
             </div>
             <div class="flex flex-row gap-1">
               <Input
+                int
                 label="R"
                 value={slice.color[0]}
                 onInput={r => props.setCfg("slices", i(), "color", 0, r)}
@@ -551,6 +579,7 @@ const pseudoColorComponents = {
                 max={255}
               />
               <Input
+                int
                 label="G"
                 value={slice.color[1]}
                 onInput={g => props.setCfg("slices", i(), "color", 1, g)}
@@ -558,6 +587,7 @@ const pseudoColorComponents = {
                 max={255}
               />
               <Input
+                int
                 label="B"
                 value={slice.color[2]}
                 onInput={b => props.setCfg("slices", i(), "color", 2, b)}
@@ -580,7 +610,7 @@ const pseudoColorComponents = {
         )}
       </For>
       <Button
-        class="bg-blue-400 p-2 text-white hover:bg-blue-500"
+        class="bg-green-400 text-white hover:bg-green-500"
         onClick={() => {
           props.setCfg("slices", [
             ...props.cfg.slices,
@@ -596,9 +626,81 @@ const pseudoColorComponents = {
       </Button>
     </>
   ),
-} as const satisfies Partial<
-  Record<PseudoColorization, Component<PseudoColorizationComponentProps>>
->;
+  redistribution: props => (
+    <>
+      <For each={props.cfg.redistribution}>
+        {(redistribution, i) => (
+          <div class="flex flex-col gap-1 bg-slate-50 p-1 shadow">
+            <div class="flex flex-row gap-1">
+              <Input
+                int
+                label="Brilho"
+                value={redistribution.brightness}
+                onInput={br => props.setCfg("redistribution", i(), "brightness", br)}
+                min={0}
+                max={255}
+              />
+            </div>
+            <div class="flex flex-row gap-1">
+              <Input
+                int
+                label="R"
+                value={redistribution.color[0]}
+                onInput={r => props.setCfg("redistribution", i(), "color", 0, r)}
+                min={0}
+                max={255}
+              />
+              <Input
+                int
+                label="G"
+                value={redistribution.color[1]}
+                onInput={g => props.setCfg("redistribution", i(), "color", 1, g)}
+                min={0}
+                max={255}
+              />
+              <Input
+                int
+                label="B"
+                value={redistribution.color[2]}
+                onInput={b => props.setCfg("redistribution", i(), "color", 2, b)}
+                min={0}
+                max={255}
+              />
+            </div>
+            <Button
+              class="bg-red-400 p-2 text-white hover:bg-red-500"
+              onClick={() => {
+                props.setCfg(
+                  "redistribution",
+                  props.cfg.redistribution.filter((_, j) => j !== i())
+                );
+              }}
+            >
+              Remover substituição
+            </Button>
+          </div>
+        )}
+      </For>
+      <Button
+        class="bg-green-400 text-white hover:bg-green-500"
+        onClick={() => {
+          props.setCfg("redistribution", [
+            ...props.cfg.redistribution,
+            {
+              brightness: props.cfg.redistribution.reduce(
+                (acc, curr) => Math.max(acc, curr.brightness),
+                0
+              ),
+              color: [0, 0, 0],
+            },
+          ]);
+        }}
+      >
+        Adicionar substituição
+      </Button>
+    </>
+  ),
+} as const satisfies Record<PseudoColorization, Component<PseudoColorizationComponentProps>>;
 
 type EnhancementComponentProps = {
   cfg: EnhancementConfig;
@@ -609,6 +711,7 @@ const enhancementComponents = {
   interval: props => (
     <>
       <Input
+        int
         label="Min"
         value={props.cfg.interval.min}
         onInput={min => props.setCfg("interval", "min", min)}
@@ -616,6 +719,7 @@ const enhancementComponents = {
         max={255}
       />
       <Input
+        int
         label="Max"
         value={props.cfg.interval.max}
         onInput={max => props.setCfg("interval", "max", max)}
@@ -628,9 +732,10 @@ const enhancementComponents = {
     <>
       <For each={props.cfg.multipleParts}>
         {(part, i) => (
-          <div class="flex flex-col gap-1 p-1">
+          <div class="flex flex-col gap-1 bg-slate-50 p-1 shadow">
             <div class="flex flex-row gap-1">
               <Input
+                int
                 label="F Min"
                 value={part.from.min}
                 onInput={min => props.setCfg("multipleParts", i(), "from", "min", min)}
@@ -638,22 +743,25 @@ const enhancementComponents = {
                 max={255}
               />
               <Input
-                label="G Min"
-                value={part.to.min}
-                onInput={min => props.setCfg("multipleParts", i(), "to", "min", min)}
-                min={0}
-                max={255}
-              />
-            </div>
-            <div class="flex flex-row gap-1">
-              <Input
+                int
                 label="F Max"
                 value={part.from.max}
                 onInput={max => props.setCfg("multipleParts", i(), "from", "max", max)}
                 min={0}
                 max={255}
               />
+            </div>
+            <div class="flex flex-row gap-1">
               <Input
+                int
+                label="G Min"
+                value={part.to.min}
+                onInput={min => props.setCfg("multipleParts", i(), "to", "min", min)}
+                min={0}
+                max={255}
+              />
+              <Input
+                int
                 label="G Max"
                 value={part.to.max}
                 onInput={max => props.setCfg("multipleParts", i(), "to", "max", max)}
@@ -676,7 +784,7 @@ const enhancementComponents = {
         )}
       </For>
       <Button
-        class="bg-blue-400 p-2 text-white hover:bg-blue-500"
+        class="bg-green-400 text-white hover:bg-green-500"
         onClick={() => {
           props.setCfg("multipleParts", [
             ...props.cfg.multipleParts,
@@ -699,6 +807,7 @@ const enhancementComponents = {
   ),
   binary: props => (
     <Input
+      int
       label="Limite"
       value={props.cfg.binary.threshold}
       onInput={threshold => props.setCfg("binary", "threshold", threshold)}
