@@ -18,7 +18,7 @@ type Props = {
 
 export const LowPassFilters: Component<Props> = props => {
   const [lowPassFilterCfg, setLowPassFilterCfg] = createStore<LowPassFilterConfig>({
-    matrixSize: 1,
+    matrixSize: 3,
   });
 
   return (
@@ -29,6 +29,7 @@ export const LowPassFilters: Component<Props> = props => {
           label="Tamanho da Matriz"
           value={lowPassFilterCfg.matrixSize}
           onInput={matrixSize => setLowPassFilterCfg("matrixSize", matrixSize)}
+          min={3}
         />
       </div>
       <div class="flex flex-col gap-1 p-2">

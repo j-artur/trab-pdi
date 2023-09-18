@@ -6,10 +6,10 @@ export const lowPassFilters = {
   mode: "Moda",
   minimum: "Mínimo",
   maximum: "Máximo",
-  kawahara: "Kawahara",
-  tomitaTsuji: "Tomita & Tsuji",
-  nagaoMatsuyama: "Nagao & Matsuyama",
-  somboonkaew: "Somboonkaew",
+  // kuwahara: "Kuwahara",
+  // tomitaTsuji: "Tomita & Tsuji",
+  // nagaoMatsuyama: "Nagao & Matsuyama",
+  // somboonkaew: "Somboonkaew",
 };
 
 export type LowPassFilter = keyof typeof lowPassFilters;
@@ -43,24 +43,24 @@ export async function lowPassFilter(
     case "mode":
       fn = getMode;
       break;
-    case "kawahara":
-      fn = getKawahara;
-      break;
-    case "tomitaTsuji":
-      fn = getTomitaTsuji;
-      break;
-    case "nagaoMatsuyama":
-      fn = getNagaoMatsuyama;
-      break;
-    case "somboonkaew":
-      fn = getSomboonkaew;
-      break;
+    // case "kuwahara":
+    //   fn = getKuwahara;
+    //   break;
+    // case "tomitaTsuji":
+    //   fn = getTomitaTsuji;
+    //   break;
+    // case "nagaoMatsuyama":
+    //   fn = getNagaoMatsuyama;
+    //   break;
+    // case "somboonkaew":
+    //   fn = getSomboonkaew;
+    //   break;
   }
 
   const halfSize = Math.floor(config.matrixSize / 2);
 
   for (let i = 0; i < img.pixels.length; i += 4) {
-    const [r, g, b] = fn(img, i, halfSize);
+    const [r, g, b] = fn!(img, i, halfSize);
 
     output.data[i + 0] = r;
     output.data[i + 1] = g;
@@ -75,6 +75,21 @@ function getMean(img: Img, i: number, halfSize: number): [number, number, number
   let r = 0;
   let g = 0;
   let b = 0;
+
+  const x = Math.floor(i / 4) % img.width;
+  const y = Math.floor(i / 4) / img.width;
+
+  if (x < halfSize) {
+    i += (halfSize - x) * 4;
+  } else if (x > img.width - halfSize) {
+    i -= (x - (img.width - halfSize)) * 4;
+  }
+
+  if (y < halfSize) {
+    i += (halfSize - y) * img.width * 4;
+  } else if (y > img.height - halfSize) {
+    i -= (y - (img.height - halfSize)) * img.width * 4;
+  }
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
@@ -195,7 +210,7 @@ function getMode(img: Img, i: number, halfSize: number): [number, number, number
   return [r, g, b];
 }
 
-function getKawahara(img: Img, i: number): [number, number, number] {
+function getKuwahara(img: Img, i: number): [number, number, number] {
   const values = [];
 
   const halfSize = 2;
