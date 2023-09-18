@@ -7,10 +7,7 @@ export class Img {
   ) {}
 }
 
-export async function getPixels(
-  imageFile: File,
-  canvas: HTMLCanvasElement
-): Promise<Img> {
+export async function getPixels(imageFile: File, canvas: HTMLCanvasElement): Promise<Img> {
   if (imageFile.name.endsWith(".pgm")) {
     const text = await imageFile.text();
     const lines = text.split("\n");
@@ -37,7 +34,7 @@ export async function getPixels(
     return new Img(imageFile.name, width, height, pixels);
   }
 
-  return new Promise<Img>((resolve) => {
+  return new Promise<Img>(resolve => {
     const img = new Image();
 
     img.onload = () => {
@@ -72,9 +69,28 @@ export async function createURL(img: Img) {
   canvas.height = img.height;
   ctx!.putImageData(output, 0, 0);
 
-  const blob = await new Promise<Blob>((resolve) =>
-    canvas.toBlob((b) => resolve(b!), "image/png")
-  );
+  const blob = await new Promise<Blob>(resolve => canvas.toBlob(b => resolve(b!), "image/png"));
 
   return URL.createObjectURL(blob);
+}
+
+export function generateHistogram(img: Img) {
+  const histogram = new Array<number>(256).fill(0);
+
+  for (let i = 0; i < img.pixels.length; i += 4) {
+    const greyIntensity = (img.pixels[i + 0] + img.pixels[i + 1] + img.pixels[i + 2]) / 3;
+    histogram[Math.floor(greyIntensity)]++;
+  }
+
+  return histogram;
+}
+
+export function simplifyHistogram(histogram: number[]) {
+  const newHistogram = new Array<number>(16).fill(0);
+
+  for (let i = 0; i < histogram.length; i++) {
+    newHistogram[Math.floor(i / 16)] += histogram[i];
+  }
+
+  return newHistogram;
 }

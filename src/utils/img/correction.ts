@@ -48,8 +48,8 @@ function gammaCorrection(img: Img, gammaFactor: number) {
 
 function histogramEqualization(img: Img) {
   const output = new ImageData(img.width, img.height);
-  const histogram = new Array(256).fill(0);
-  const cdf = new Array(256).fill(0);
+  const histogram = new Array<number>(256).fill(0);
+  const cdf = new Array<number>(256).fill(0);
 
   for (let i = 0; i < img.pixels.length; i += 4) {
     const greyIntensity = (img.pixels[i + 0] + img.pixels[i + 1] + img.pixels[i + 2]) / 3;
@@ -72,15 +72,4 @@ function histogramEqualization(img: Img) {
   }
 
   return output;
-}
-
-export function generateHistogram(img: Img) {
-  const histogram = new Array<number>(256).fill(0);
-
-  for (let i = 0; i < img.pixels.length; i += 4) {
-    const greyIntensity = (img.pixels[i + 0] + img.pixels[i + 1] + img.pixels[i + 2]) / 3;
-    histogram[Math.floor(greyIntensity)]++;
-  }
-
-  return histogram;
 }
