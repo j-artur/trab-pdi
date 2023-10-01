@@ -1,4 +1,4 @@
-import { Img } from ".";
+import { Img, coordsInBounds } from ".";
 
 export const lowPassFilters = {
   mean: "Média",
@@ -69,28 +69,24 @@ export function lowPassFilter(filter: LowPassFilter, img: Img, config: LowPassFi
 
 function getMean(img: Img, i: number, halfSize: number): [number, number, number] {
   let v = 0;
+  let count = 0;
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      let index = i + x * 4 + y * img.width * 4;
+      if (coordsInBounds(img, i, x, y)) {
+        let index = i + x * 4 + y * img.width * 4;
 
-      if (index < 0) {
-        index = 0;
-      } else if (index >= img.pixels.length) {
-        index = img.pixels.length - 4;
+        const r = img.pixels[index + 0];
+        const g = img.pixels[index + 1];
+        const b = img.pixels[index + 2];
+
+        v += (r + g + b) / 3;
+        count++;
       }
-
-      const r = img.pixels[index + 0];
-      const g = img.pixels[index + 1];
-      const b = img.pixels[index + 2];
-
-      v += (r + g + b) / 3;
     }
   }
 
-  const size = (halfSize * 2 + 1) ** 2;
-
-  v /= size;
+  v /= count;
 
   v = Math.max(0, Math.min(255, Math.round(v)));
 
@@ -102,21 +98,17 @@ function getMedian(img: Img, i: number, halfSize: number): [number, number, numb
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      let index = i + x * 4 + y * img.width * 4;
+      if (coordsInBounds(img, i, x, y)) {
+        let index = i + x * 4 + y * img.width * 4;
 
-      if (index < 0) {
-        index = 0;
-      } else if (index >= img.pixels.length) {
-        index = img.pixels.length - 4;
+        const r = img.pixels[index + 0];
+        const g = img.pixels[index + 1];
+        const b = img.pixels[index + 2];
+
+        const gray = Math.round((r + g + b) / 3);
+
+        values.push(gray);
       }
-
-      const r = img.pixels[index + 0];
-      const g = img.pixels[index + 1];
-      const b = img.pixels[index + 2];
-
-      const gray = Math.round((r + g + b) / 3);
-
-      values.push(gray);
     }
   }
 
@@ -134,17 +126,13 @@ function getMaximum(img: Img, i: number, halfSize: number): [number, number, num
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      let index = i + x * 4 + y * img.width * 4;
+      if (coordsInBounds(img, i, x, y)) {
+        let index = i + x * 4 + y * img.width * 4;
 
-      if (index < 0) {
-        index = 0;
-      } else if (index >= img.pixels.length) {
-        index = img.pixels.length - 4;
+        r = Math.max(r, img.pixels[index + 0]);
+        g = Math.max(g, img.pixels[index + 1]);
+        b = Math.max(b, img.pixels[index + 2]);
       }
-
-      r = Math.max(r, img.pixels[index + 0]);
-      g = Math.max(g, img.pixels[index + 1]);
-      b = Math.max(b, img.pixels[index + 2]);
     }
   }
 
@@ -158,17 +146,13 @@ function getMinimum(img: Img, i: number, halfSize: number): [number, number, num
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      let index = i + x * 4 + y * img.width * 4;
+      if (coordsInBounds(img, i, x, y)) {
+        let index = i + x * 4 + y * img.width * 4;
 
-      if (index < 0) {
-        index = 0;
-      } else if (index >= img.pixels.length) {
-        index = img.pixels.length - 4;
+        r = Math.min(r, img.pixels[index + 0]);
+        g = Math.min(g, img.pixels[index + 1]);
+        b = Math.min(b, img.pixels[index + 2]);
       }
-
-      r = Math.min(r, img.pixels[index + 0]);
-      g = Math.min(g, img.pixels[index + 1]);
-      b = Math.min(b, img.pixels[index + 2]);
     }
   }
 
@@ -180,17 +164,13 @@ function getMode(img: Img, i: number, halfSize: number): [number, number, number
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      let index = i + x * 4 + y * img.width * 4;
+      if (coordsInBounds(img, i, x, y)) {
+        let index = i + x * 4 + y * img.width * 4;
 
-      if (index < 0) {
-        index = 0;
-      } else if (index >= img.pixels.length) {
-        index = img.pixels.length - 4;
+        values.push(img.pixels[index + 0]);
+        values.push(img.pixels[index + 1]);
+        values.push(img.pixels[index + 2]);
       }
-
-      values.push(img.pixels[index + 0]);
-      values.push(img.pixels[index + 1]);
-      values.push(img.pixels[index + 2]);
     }
   }
 

@@ -94,3 +94,23 @@ export function simplifyHistogram(histogram: number[]) {
 
   return newHistogram;
 }
+
+export function coordsInBounds(img: Img, i: number, dx: number, dy: number): boolean {
+  const x = (i / 4) % img.width;
+  const y = Math.floor(i / 4 / img.width);
+
+  return x + dx >= 0 && x + dx < img.width && y + dy >= 0 && y + dy < img.height;
+}
+
+export function reverse(img: Img): Img {
+  const output = new ImageData(img.width, img.height);
+
+  for (let i = 0; i < img.pixels.length; i += 4) {
+    output.data[i + 0] = 255 - img.pixels[i + 0];
+    output.data[i + 1] = 255 - img.pixels[i + 1];
+    output.data[i + 2] = 255 - img.pixels[i + 2];
+    output.data[i + 3] = img.pixels[i + 3];
+  }
+
+  return new Img(img.name, output.width, output.height, output.data);
+}

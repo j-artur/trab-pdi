@@ -1,4 +1,4 @@
-import { Img } from ".";
+import { Img, coordsInBounds } from ".";
 
 export const highPassFilters = {
   h1: "h1",
@@ -115,19 +115,15 @@ function getPixel(
 
   for (let x = -halfSize; x <= halfSize; x++) {
     for (let y = -halfSize; y <= halfSize; y++) {
-      let index = i + x * 4 + y * img.width * 4;
+      if (coordsInBounds(img, i, x, y)) {
+        let index = i + x * 4 + y * img.width * 4;
 
-      if (index < 0) {
-        index = 0;
-      } else if (index >= img.pixels.length) {
-        index = img.pixels.length - 4;
+        const maskValue = mask[x + halfSize][y + halfSize];
+
+        r += img.pixels[index + 0] * maskValue;
+        g += img.pixels[index + 1] * maskValue;
+        b += img.pixels[index + 2] * maskValue;
       }
-
-      const maskValue = mask[x + halfSize][y + halfSize];
-
-      r += img.pixels[index + 0] * maskValue;
-      g += img.pixels[index + 1] * maskValue;
-      b += img.pixels[index + 2] * maskValue;
     }
   }
 

@@ -23,7 +23,7 @@ export const HighPassFilters: Component<Props> = props => {
   });
 
   return (
-    <Collapsible title="Filtro passa-alta">
+    <Collapsible title="Filtros passa-alta">
       <div class="flex flex-col gap-1 p-2">
         <For each={Object.keys(highPassFilters) as HighPassFilter[]}>
           {f => (

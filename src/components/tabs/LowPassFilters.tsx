@@ -22,7 +22,7 @@ export const LowPassFilters: Component<Props> = props => {
   });
 
   return (
-    <Collapsible title="Filtro passa-baixa">
+    <Collapsible title="Filtros passa-baixa">
       <div class="flex gap-2 p-2">
         <Input
           int
