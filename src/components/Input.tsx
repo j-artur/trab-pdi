@@ -1,4 +1,3 @@
-import { createEffect } from "solid-js";
 import { clx } from "../utils";
 
 type InputProps = ({ int: true } | { float: true }) & {

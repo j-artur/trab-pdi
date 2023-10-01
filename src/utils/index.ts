@@ -9,10 +9,7 @@ export type Falsy<T> =
   | null
   | undefined;
 
-export type ClassValue =
-  | ClassValue[]
-  | Falsy<string>
-  | Record<string, Falsy<unknown>>;
+export type ClassValue = ClassValue[] | Falsy<string> | Record<string, Falsy<unknown>>;
 export function clx(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

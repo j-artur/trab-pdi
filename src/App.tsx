@@ -16,14 +16,15 @@ import { Button } from "./components/Button";
 import { Thumbnail } from "./components/Thumbnail";
 import { ColorSchemes } from "./components/tabs/ColorSchemes";
 import { Enhancements } from "./components/tabs/Enhancements";
+import { Halftonings } from "./components/tabs/Halftonings";
+import { HighPassFilters } from "./components/tabs/HighPassFilters";
 import { LowPassFilters } from "./components/tabs/LowPassFilters";
 import { Operations } from "./components/tabs/Operations";
 import { PseudoColorizations } from "./components/tabs/PseudoColorizations";
 import { Transformations } from "./components/tabs/Transformations";
 import { Zooms } from "./components/tabs/Zoom";
 import { clx } from "./utils";
-import { Img, generateHistogram, getPixels, simplifyHistogram } from "./utils/img";
-import { HighPassFilters } from "./components/tabs/HighPassFilters";
+import { Img, generateHistogram, getPixels } from "./utils/img";
 
 const App: Component = () => {
   const [images, setImages] = createSignal<Img[]>([]);
@@ -107,6 +108,7 @@ const App: Component = () => {
         <Enhancements image={primaryImg()} onOutput={handleOutput} />
         <LowPassFilters image={primaryImg()} onOutput={handleOutput} />
         <HighPassFilters image={primaryImg()} onOutput={handleOutput} />
+        <Halftonings image={primaryImg()} onOutput={handleOutput} />
       </aside>
       <div class="h-full w-full overflow-y-scroll bg-slate-100 p-2">
         <Dialog.Root open={showHistogram()} onOpenChange={setShowHistogram}>
@@ -190,7 +192,6 @@ const App: Component = () => {
                     <div class="absolute left-0 top-0 hidden p-1 group-hover:block">
                       <Button
                         onClick={() => {
-                          console.log(img);
                           setSelectedHistogram(generateHistogram(img));
                           setShowHistogram(true);
                         }}
@@ -220,7 +221,6 @@ const App: Component = () => {
                     <div class="absolute left-0 top-0 hidden p-1 group-hover:block">
                       <Button
                         onClick={() => {
-                          console.log(img);
                           setSelectedHistogram(generateHistogram(img));
                           setShowHistogram(true);
                         }}

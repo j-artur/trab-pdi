@@ -43,41 +43,6 @@ const highPassFilterMasks = {
   ],
 };
 
-function getPixel(
-  img: Img,
-  i: number,
-  mask: number[][],
-  halfSize: number
-): [number, number, number] {
-  let r = 0;
-  let g = 0;
-  let b = 0;
-
-  for (let x = -halfSize; x <= halfSize; x++) {
-    for (let y = -halfSize; y <= halfSize; y++) {
-      let index = i + x * 4 + y * img.width * 4;
-
-      if (index < 0) {
-        index = 0;
-      } else if (index >= img.pixels.length) {
-        index = img.pixels.length - 4;
-      }
-
-      const maskValue = mask[x + halfSize][y + halfSize];
-
-      r += img.pixels[index + 0] * maskValue;
-      g += img.pixels[index + 1] * maskValue;
-      b += img.pixels[index + 2] * maskValue;
-    }
-  }
-
-  r = Math.max(0, Math.min(255, Math.round(r)));
-  g = Math.max(0, Math.min(255, Math.round(g)));
-  b = Math.max(0, Math.min(255, Math.round(b)));
-
-  return [r, g, b];
-}
-
 export function highPassFilter(
   filter: HighPassFilter,
   img: Img,
@@ -136,4 +101,39 @@ function highBoost(img: Img, factor: HighPassFilterConfig["boostFactor"]): Img {
     output.height,
     output.data
   );
+}
+
+function getPixel(
+  img: Img,
+  i: number,
+  mask: number[][],
+  halfSize: number
+): [number, number, number] {
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  for (let x = -halfSize; x <= halfSize; x++) {
+    for (let y = -halfSize; y <= halfSize; y++) {
+      let index = i + x * 4 + y * img.width * 4;
+
+      if (index < 0) {
+        index = 0;
+      } else if (index >= img.pixels.length) {
+        index = img.pixels.length - 4;
+      }
+
+      const maskValue = mask[x + halfSize][y + halfSize];
+
+      r += img.pixels[index + 0] * maskValue;
+      g += img.pixels[index + 1] * maskValue;
+      b += img.pixels[index + 2] * maskValue;
+    }
+  }
+
+  r = Math.max(0, Math.min(255, Math.round(r)));
+  g = Math.max(0, Math.min(255, Math.round(g)));
+  b = Math.max(0, Math.min(255, Math.round(b)));
+
+  return [r, g, b];
 }

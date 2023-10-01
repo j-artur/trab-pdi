@@ -2,7 +2,6 @@ import { Component, For } from "solid-js";
 import { SetStoreFunction, createStore } from "solid-js/store";
 import { Dynamic } from "solid-js/web";
 import { Img } from "../../utils/img";
-import { ColorScheme, colorSchemes, splitColorspace } from "../../utils/img/color";
 import {
   PseudoColorization,
   PseudoColorizationConfig,

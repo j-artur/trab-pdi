@@ -1,5 +1,3 @@
-import { clx } from "../utils";
-
 type Props = {
   label: string;
   checked: boolean;

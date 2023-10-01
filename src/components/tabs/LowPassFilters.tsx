@@ -1,4 +1,4 @@
-import { Component, For, createSignal } from "solid-js";
+import { Component, For } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Img } from "../../utils/img";
 import {
@@ -34,16 +34,16 @@ export const LowPassFilters: Component<Props> = props => {
       </div>
       <div class="flex flex-col gap-1 p-2">
         <For each={Object.keys(lowPassFilters) as LowPassFilter[]}>
-          {z => (
+          {f => (
             <Button
               class="w-full"
               onClick={() => {
-                const img = lowPassFilter(z, props.image!, lowPassFilterCfg);
+                const img = lowPassFilter(f, props.image!, lowPassFilterCfg);
                 props.onOutput(img);
               }}
               disabled={!props.image}
             >
-              {lowPassFilters[z]}
+              {lowPassFilters[f]}
             </Button>
           )}
         </For>

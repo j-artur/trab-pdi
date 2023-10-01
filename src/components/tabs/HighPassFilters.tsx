@@ -1,5 +1,6 @@
-import { Component, For, Show, createSignal } from "solid-js";
+import { Component, For, Show } from "solid-js";
 import { SetStoreFunction, createStore } from "solid-js/store";
+import { Dynamic } from "solid-js/web";
 import { Img } from "../../utils/img";
 import {
   HighPassFilter,
@@ -10,7 +11,6 @@ import {
 import { Button } from "../Button";
 import { Collapsible } from "../Collapsible";
 import { Input } from "../Input";
-import { Dynamic } from "solid-js/web";
 
 type Props = {
   image?: Img;
