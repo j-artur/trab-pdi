@@ -22,6 +22,7 @@ import { LowPassFilters } from "./components/tabs/LowPassFilters";
 import { Operations } from "./components/tabs/Operations";
 import { PseudoColorizations } from "./components/tabs/PseudoColorizations";
 import { Segmentations } from "./components/tabs/Segmentation";
+import { Thresholdings } from "./components/tabs/Thresholdings";
 import { Transformations } from "./components/tabs/Transformations";
 import { Zooms } from "./components/tabs/Zoom";
 import { clx } from "./utils";
@@ -111,6 +112,7 @@ const App: Component = () => {
         <HighPassFilters image={primaryImg()} onOutput={handleOutput} />
         <Halftonings image={primaryImg()} onOutput={handleOutput} />
         <Segmentations image={primaryImg()} onOutput={handleOutput} />
+        <Thresholdings image={primaryImg()} onOutput={handleOutput} />
       </aside>
       <div class="h-full w-full overflow-y-scroll bg-slate-100 p-2">
         <Dialog.Root open={showHistogram()} onOpenChange={setShowHistogram}>
