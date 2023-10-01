@@ -23,6 +23,7 @@ import { Transformations } from "./components/tabs/Transformations";
 import { Zooms } from "./components/tabs/Zoom";
 import { clx } from "./utils";
 import { Img, generateHistogram, getPixels, simplifyHistogram } from "./utils/img";
+import { HighPassFilters } from "./components/tabs/HighPassFilters";
 
 const App: Component = () => {
   const [images, setImages] = createSignal<Img[]>([]);
@@ -105,6 +106,7 @@ const App: Component = () => {
         <PseudoColorizations image={primaryImg()} onOutput={handleOutput} />
         <Enhancements image={primaryImg()} onOutput={handleOutput} />
         <LowPassFilters image={primaryImg()} onOutput={handleOutput} />
+        <HighPassFilters image={primaryImg()} onOutput={handleOutput} />
       </aside>
       <div class="h-full w-full overflow-y-scroll bg-slate-100 p-2">
         <Dialog.Root open={showHistogram()} onOpenChange={setShowHistogram}>

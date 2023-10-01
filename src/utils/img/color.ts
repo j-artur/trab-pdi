@@ -250,7 +250,7 @@ function rgbToGreyscale(r: number, g: number, b: number): number {
   return (r + g + b) / 3;
 }
 
-export async function splitColorspace(scheme: ColorScheme, img: Img): Promise<Img[]> {
+export function splitColorspace(scheme: ColorScheme, img: Img): Img[] {
   switch (scheme) {
     case "RGB":
       return splitRGB(img);

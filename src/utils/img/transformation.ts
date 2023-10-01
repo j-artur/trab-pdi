@@ -42,11 +42,11 @@ export type TransformationConfig = {
   };
 };
 
-export async function transform(
+export function transform(
   transformation: Transformation,
   img: Img,
   config: TransformationConfig
-): Promise<Img> {
+): Img {
   let output: ImageData;
 
   if (transformation === "scale") {

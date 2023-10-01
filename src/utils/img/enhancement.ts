@@ -51,11 +51,7 @@ function getInterval(img: Img) {
   return [fMin, fMax];
 }
 
-export async function enhance(
-  enchancement: Enhancement,
-  img: Img,
-  config: EnhancementConfig
-): Promise<Img[]> {
+export function enhance(enchancement: Enhancement, img: Img, config: EnhancementConfig): Img[] {
   let output: ImageData;
 
   if (enchancement === "bitSlicing") {

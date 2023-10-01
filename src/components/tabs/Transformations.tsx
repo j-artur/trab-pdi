@@ -83,8 +83,8 @@ export const Transformations: Component<Props> = props => {
                   />
                   <Button
                     class="bg-blue-400 p-2 text-white hover:bg-blue-500"
-                    onClick={async () => {
-                      const img = await transform(tr, props.image!, transformCfg);
+                    onClick={() => {
+                      const img = transform(tr, props.image!, transformCfg);
                       props.onOutput(img);
                     }}
                     disabled={!props.image}

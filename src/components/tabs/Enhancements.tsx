@@ -49,8 +49,8 @@ export const Enhancements: Component<Props> = props => {
               when={en in enhancementComponents}
               fallback={
                 <Button
-                  onClick={async () => {
-                    const imgs = await enhance(en, props.image!, enhancementCfg);
+                  onClick={() => {
+                    const imgs = enhance(en, props.image!, enhancementCfg);
                     props.onOutput(imgs);
                   }}
                   disabled={!props.image}
@@ -69,8 +69,8 @@ export const Enhancements: Component<Props> = props => {
                     />
                     <Button
                       class="bg-blue-400 p-2 text-white hover:bg-blue-500"
-                      onClick={async () => {
-                        const imgs = await enhance(en, props.image!, enhancementCfg);
+                      onClick={() => {
+                        const imgs = enhance(en, props.image!, enhancementCfg);
                         props.onOutput(imgs);
                       }}
                       disabled={!props.image}

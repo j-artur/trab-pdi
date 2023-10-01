@@ -37,8 +37,8 @@ export const LowPassFilters: Component<Props> = props => {
           {z => (
             <Button
               class="w-full"
-              onClick={async () => {
-                const img = await lowPassFilter(z, props.image!, lowPassFilterCfg);
+              onClick={() => {
+                const img = lowPassFilter(z, props.image!, lowPassFilterCfg);
                 props.onOutput(img);
               }}
               disabled={!props.image}

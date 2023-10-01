@@ -30,8 +30,8 @@ export const Zooms: Component<Props> = props => {
           {z => (
             <Button
               class="w-full"
-              onClick={async () => {
-                const img = await zoom(z, props.image!, zoomCfg());
+              onClick={() => {
+                const img = zoom(z, props.image!, zoomCfg());
                 props.onOutput(img);
               }}
               disabled={!props.image}

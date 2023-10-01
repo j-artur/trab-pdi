@@ -13,7 +13,7 @@ export type ZoomConfig = {
   amount: number;
 };
 
-export async function zoom(zoom: Zoom, img: Img, config: ZoomConfig): Promise<Img> {
+export function zoom(zoom: Zoom, img: Img, config: ZoomConfig): Img {
   let output: ImageData;
 
   if (zoom.startsWith("in")) {

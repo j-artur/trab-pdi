@@ -37,8 +37,8 @@ export const Operations: Component<Props> = props => {
           {op => (
             <Button
               class="w-full"
-              onClick={async () => {
-                const img = await operate(op, props.primaryImage!, props.secondaryImage!, opCfg());
+              onClick={() => {
+                const img = operate(op, props.primaryImage!, props.secondaryImage!, opCfg());
                 props.onOutput(img);
               }}
               disabled={!props.primaryImage || !props.secondaryImage}

@@ -22,7 +22,7 @@ export type OperationConfig = {
   onOutOfRange: keyof typeof operationConfigs;
 };
 
-export async function operate(operation: Operation, img1: Img, img2: Img, config: OperationConfig) {
+export function operate(operation: Operation, img1: Img, img2: Img, config: OperationConfig): Img {
   // center the smaller image in the bigger one
   if (img1.width !== img2.width || img1.height !== img2.height) {
     const width = Math.max(img1.width, img2.width);

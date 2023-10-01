@@ -17,8 +17,8 @@ export const ColorSchemes: Component<Props> = props => {
           {scheme => (
             <Button
               class="w-full"
-              onClick={async () => {
-                const imgs = await splitColorspace(scheme, props.image!);
+              onClick={() => {
+                const imgs = splitColorspace(scheme, props.image!);
                 props.onOutput(imgs);
               }}
               disabled={!props.image}

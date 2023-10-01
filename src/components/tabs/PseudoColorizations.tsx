@@ -49,8 +49,8 @@ export const PseudoColorizations: Component<Props> = props => {
                   />
                   <Button
                     class="bg-blue-400 p-2 text-white hover:bg-blue-500"
-                    onClick={async () => {
-                      const img = await pseudoColorize(pseudoColor, props.image!, pseudoColorCfg);
+                    onClick={() => {
+                      const img = pseudoColorize(pseudoColor, props.image!, pseudoColorCfg);
                       props.onOutput(img);
                     }}
                     disabled={!props.image}

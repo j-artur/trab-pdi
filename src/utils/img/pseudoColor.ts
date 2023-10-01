@@ -15,11 +15,11 @@ export type PseudoColorizationConfig = {
   }[];
 };
 
-export async function pseudoColorize(
+export function pseudoColorize(
   type: PseudoColorization,
   img: Img,
   config: PseudoColorizationConfig
-) {
+): Img {
   let output: ImageData;
 
   switch (type) {
