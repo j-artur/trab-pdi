@@ -114,7 +114,11 @@ const App: Component = () => {
         <Halftonings image={primaryImg()} onOutput={handleOutput} />
         <Segmentations image={primaryImg()} onOutput={handleOutput} />
         <Thresholdings image={primaryImg()} onOutput={handleOutput} />
-        <Watermark image={primaryImg()} onOutput={handleOutput} />
+        <Watermark
+          primaryImage={primaryImg()}
+          secondaryImage={secondaryImg()}
+          onOutput={handleOutput}
+        />
       </aside>
       <div class="h-full w-full overflow-y-scroll bg-slate-100 p-2">
         <Dialog.Root open={showHistogram()} onOpenChange={setShowHistogram}>
