@@ -11,7 +11,7 @@ type Props = {
 
 export const Halftonings: Component<Props> = props => {
   return (
-    <Collapsible title="Halftoning">
+    <Collapsible title="Meios-tons">
       <div class="flex flex-col gap-1 p-2">
         <For each={Object.keys(halftonings) as Halftoning[]}>
           {ht => (

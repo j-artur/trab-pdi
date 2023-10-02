@@ -25,7 +25,7 @@ export const Thresholdings: Component<Props> = props => {
   });
 
   return (
-    <Collapsible title="Segmentação">
+    <Collapsible title="Limiarização">
       <div class="flex flex-col gap-1 p-2">
         <For each={Object.keys(thresholdings) as Thresholding[]}>
           {s => (

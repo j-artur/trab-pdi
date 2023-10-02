@@ -4,6 +4,7 @@ export const segmentations = {
   dotDetection: "Detecção de Pontos",
   lineDetection: "Detecção de Retas",
   borderDetection: "Detecção de Bordas",
+  regionGrowing: "Crescimento de Regiões",
 };
 
 export type Segmentation = keyof typeof segmentations;
@@ -40,6 +41,10 @@ export type SegmentationConfig = {
   };
   borderDetection: {
     type: BorderDetectionType;
+  };
+  regionGrowing: {
+    threshold: number;
+    seeds: number;
   };
 };
 
@@ -249,6 +254,8 @@ export function segment(segmentation: Segmentation, img: Img, config: Segmentati
       return reverse(lineDetection(img, config.lineDetection));
     case "borderDetection":
       return reverse(borderDetection(img, config.borderDetection));
+    case "regionGrowing":
+      return regionGrowing(img, config.regionGrowing);
   }
 }
 
@@ -300,7 +307,7 @@ function borderDetection(img: Img, config: SegmentationConfig["borderDetection"]
     let value = 0;
 
     for (let j = 0; j < mask.length; j++) {
-      const newValue = applyMask(img, i, mask[j]);
+      const newValue = Math.abs(applyMask(img, i, mask[j]));
 
       switch (config.type) {
         case "roberts":
@@ -317,15 +324,6 @@ function borderDetection(img: Img, config: SegmentationConfig["borderDetection"]
           value = Math.max(value, newValue);
           break;
       }
-    }
-
-    switch (config.type) {
-      case "roberts":
-      case "crossedRoberts":
-      case "prewitt":
-      case "sobel":
-        value = Math.abs(value);
-        break;
     }
 
     output.data[i + 0] = value;
@@ -362,4 +360,82 @@ function applyMask(img: Img, i: number, mask: number[][]) {
   }
 
   return gray;
+}
+
+function regionGrowing(img: Img, config: SegmentationConfig["regionGrowing"]): Img {
+  const output = new ImageData(img.width, img.height);
+
+  const seeds = Array.from({ length: config.seeds }, () => {
+    const x = Math.floor(Math.random() * img.width);
+    const y = Math.floor(Math.random() * img.height);
+
+    const i = indexOf(img, x, y);
+    const r = img.pixels[i + 0];
+    const g = img.pixels[i + 1];
+    const b = img.pixels[i + 2];
+
+    const value = (r + g + b) / 3;
+
+    const color = [
+      Math.floor(Math.random() * 256),
+      Math.floor(Math.random() * 256),
+      Math.floor(Math.random() * 256),
+    ];
+
+    return { x, y, value, color };
+  });
+
+  const queue = [...seeds];
+
+  const visited = new Set();
+
+  while (queue.length) {
+    const seed = queue.shift();
+
+    if (!seed) continue;
+
+    const neighbors = [
+      { x: seed.x - 1, y: seed.y },
+      { x: seed.x + 1, y: seed.y },
+      { x: seed.x, y: seed.y - 1 },
+      { x: seed.x, y: seed.y + 1 },
+    ];
+
+    for (const neighbor of neighbors) {
+      if (visited.has(`${neighbor.x}-${neighbor.y}`)) continue;
+
+      if (!coordsInBounds(img, 0, neighbor.x, neighbor.y)) continue;
+
+      const i = indexOf(img, neighbor.x, neighbor.y);
+      const r = img.pixels[i + 0];
+      const g = img.pixels[i + 1];
+      const b = img.pixels[i + 2];
+
+      const value = (r + g + b) / 3;
+
+      const foundSeed = seeds.find(seed => Math.abs(seed.value - value) < config.threshold);
+
+      if (foundSeed) {
+        output.data[i + 0] = foundSeed.color[0];
+        output.data[i + 1] = foundSeed.color[1];
+        output.data[i + 2] = foundSeed.color[2];
+
+        queue.push({ x: neighbor.x, y: neighbor.y, value, color: foundSeed.color });
+      } else {
+        output.data[i + 0] = 0;
+        output.data[i + 1] = 0;
+        output.data[i + 2] = 0;
+      }
+
+      output.data[i + 3] = img.pixels[i + 3];
+
+      visited.add(`${neighbor.x}-${neighbor.y}`);
+    }
+  }
+
+  return new Img(`region-growing-${img.name}`, output.width, output.height, output.data);
+}
+
+function indexOf(img: Img, x: number, y: number) {
+  return x * 4 + y * img.width * 4;
 }
