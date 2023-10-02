@@ -24,6 +24,7 @@ import { PseudoColorizations } from "./components/tabs/PseudoColorizations";
 import { Segmentations } from "./components/tabs/Segmentation";
 import { Thresholdings } from "./components/tabs/Thresholdings";
 import { Transformations } from "./components/tabs/Transformations";
+import { Watermark } from "./components/tabs/Watermark";
 import { Zooms } from "./components/tabs/Zoom";
 import { clx } from "./utils";
 import { Img, generateHistogram, getPixels } from "./utils/img";
@@ -113,6 +114,7 @@ const App: Component = () => {
         <Halftonings image={primaryImg()} onOutput={handleOutput} />
         <Segmentations image={primaryImg()} onOutput={handleOutput} />
         <Thresholdings image={primaryImg()} onOutput={handleOutput} />
+        <Watermark image={primaryImg()} onOutput={handleOutput} />
       </aside>
       <div class="h-full w-full overflow-y-scroll bg-slate-100 p-2">
         <Dialog.Root open={showHistogram()} onOpenChange={setShowHistogram}>
