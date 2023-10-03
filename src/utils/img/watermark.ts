@@ -23,13 +23,12 @@ export function watermark(img: Img, config: WatermarkConfig): Img {
   canvas.width = img.width;
   canvas.height = img.height;
 
-  ctx.globalAlpha = config.opacity;
-
   if (config.img) {
     const imageData = ctx.createImageData(config.img.width, config.img.height);
     imageData.data.set(config.img.pixels);
     ctx.putImageData(imageData, config.x, config.y);
   } else {
+    ctx.globalAlpha = config.opacity;
     ctx.font = `${config.fontSize}px ${config.fontFamily}`;
     ctx.fillStyle = `rgb(${config.color[0]}, ${config.color[1]}, ${config.color[2]})`;
     ctx.rotate((config.rotate * Math.PI) / 180);
